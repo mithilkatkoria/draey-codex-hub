@@ -1,6 +1,23 @@
-# Draey Codex Hub
+# Draey Codex Hub — Multi-account Codex manager for Windows
 
-An open-source Windows companion for viewing real Codex account allowances and opening accounts in your existing Codex workspace. Built in public with Tauri, Rust, React, and TypeScript.
+**Have more than one Codex account? See your real usage limits in one place and deliberately choose which account to use next.**
+
+Draey Codex Hub is a Windows Codex account manager and usage monitor for developers managing personal, work, or other accounts they are authorized to use. Compare remaining allowances, see reset times, and open Codex from one local dashboard.
+
+[Download for Windows](https://github.com/mithilkatkoria/draey-codex-hub/releases) · [Getting started](#download-for-windows) · [Version history](CHANGELOG.md) · [Contribute](CONTRIBUTING.md)
+
+### Why use it with multiple Codex accounts?
+
+| Your situation | How the Hub helps |
+| --- | --- |
+| You keep checking limits across several accounts | Startup refresh requests each account's real limits independently. |
+| Your accounts have different plans and allowance windows | Cards display the windows Codex reports, including Pro and additional-model allowances. |
+| You want to know when an allowance resets | Remaining usage and reset times appear together, with timestamps for cached data. |
+| An account is reserved or has Friend Priority | Keep the preference visible and make an explicit choice before opening it. |
+| You want your familiar projects and tasks | The launcher targets the existing Codex workspace; cross-account handoff remains under acceptance testing. |
+| You prefer a desktop tool | Use project shortcuts, the system tray, and Ctrl+K on Windows. |
+
+This is an account-management tool, not a way to increase allowances or bypass account restrictions. Every user connects their own authorized accounts. There is no automatic account rotation.
 
 **Early test build:** full real A/B/A account-switch acceptance is still pending. This is an independent community project, not an official OpenAI product.
 
@@ -84,3 +101,29 @@ git push -u origin feature/my-change
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Contributions are welcome under the [MIT license](LICENSE).
+
+## Frequently asked questions
+
+### Does this work with more than two Codex accounts?
+
+The Hub supports multiple saved accounts. Four real connected accounts have been tested for independent startup usage refresh; there is no four-account limit in the profile model.
+
+### Are the usage numbers real?
+
+Production usage comes from Codex app-server. Unreported values stay unknown. Failed requests show an error or timestamped cached values; they do not generate pretend allowances.
+
+### Is it an official OpenAI app?
+
+No. Draey Codex Hub is an independent project created by Mithil Katkoria. OpenAI, ChatGPT, and Codex names identify the products it works with; no endorsement is implied.
+
+### Is account switching fully verified?
+
+Not yet. Existing-workspace opening and waiting/cancellation have been checked. Full real A/B/A switching, including the reopened account identity and original sidebar, remains pending. See [verification details](VERIFICATION.md).
+
+### Who owns this project?
+
+Copyright © 2026 Mithil Katkoria. See [LICENSE](LICENSE) for code permissions and [BRANDING.md](BRANDING.md) for attribution and official-project identification. Publishing source does not remove its copyright.
+
+## Versioning
+
+The public download is currently **v0.1.0-alpha.1**, not v1.0. Future releases use `MAJOR.MINOR.PATCH`: fixes such as `1.0.1`, smaller compatible features such as `1.1.0`, and major/breaking changes such as `2.0.0`. Every commit is tracked in Git; every published release gets its own tag and changelog entry. See [RELEASING.md](RELEASING.md).

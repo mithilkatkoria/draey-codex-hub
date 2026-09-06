@@ -16,6 +16,8 @@ jobs:
           node-version: 22
       - run: npm install --global pnpm@10
       - run: pnpm install --frozen-lockfile
+      - run: pnpm version:check
+      - run: node --test scripts/version.test.mjs
       - run: pnpm test
       - run: pnpm build
       - run: rustup toolchain install stable-x86_64-pc-windows-msvc --profile minimal
