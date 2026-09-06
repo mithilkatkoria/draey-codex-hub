@@ -1,4 +1,4 @@
-# Draey Codex Hub — Multi-account Codex manager for Windows
+# Draey Codex Hub: Multi-account Codex manager for Windows
 
 **Have more than one Codex account? See your real usage limits in one place and deliberately choose which account to use next.**
 
@@ -23,7 +23,9 @@ This is an account-management tool, not a way to increase allowances or bypass a
 
 ## Download for Windows
 
-**[Download v0.1.0-alpha.2](https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.2)**
+**[Download the published alpha](https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.1)**
+
+The published download is v0.1.0-alpha.1. The newer app changes on `main` are still in development and are not included in that download.
 
 1. Download `Draey-Codex-Hub-Windows.zip` from the release's **Assets** section. GitHub's automatic **Source code** downloads do not contain the app.
 2. Extract the ZIP and double-click **Draey Codex Hub.exe**. A standalone `.exe` is also attached to the release.
@@ -126,4 +128,4 @@ Copyright © 2026 Mithil Katkoria. See [LICENSE](LICENSE) for code permissions a
 
 ## Versioning
 
-The public download is currently **v0.1.0-alpha.2**, not v1.0. Future releases use `MAJOR.MINOR.PATCH`: fixes such as `1.0.1`, smaller compatible features such as `1.1.0`, and major/breaking changes such as `2.0.0`. Every commit is tracked in Git; every published release gets its own tag and changelog entry. See [RELEASING.md](RELEASING.md).
+The public download is **v0.1.0-alpha.1**. Source development is preparing **v0.1.0-alpha.2**; it has not been released as v1.0. Future releases use `MAJOR.MINOR.PATCH`: fixes such as `1.0.1`, smaller compatible features such as `1.1.0`, and major/breaking changes such as `2.0.0`. Every commit is tracked in Git; every published release gets its own tag and changelog entry. See [RELEASING.md](RELEASING.md).
