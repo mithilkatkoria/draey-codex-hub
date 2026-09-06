@@ -4,6 +4,11 @@ All published releases receive an immutable Git tag and an entry here. Unrelease
 
 ## [Unreleased]
 
+### Pending
+- Record the next changes here.
+
+## [0.1.0-alpha.2] - 2026-09-06
+
 ### Fixed
 - Detect Codex sign-out while an account switch is waiting and request a normal restart of the default Desktop window before loading the saved login.
 - Preserve refreshed credentials in the matching saved account slot before logout removes the workspace login.
@@ -32,5 +37,7 @@ The signed-out restart flow still requires real Desktop acceptance; no productio
 - Unsigned test executable; no signed installer.
 - Initial download predates the documentation commit tagged with this release; it is not claimed to be a reproducible artifact of that tag.
 
-[Unreleased]: https://github.com/mithilkatkoria/draey-codex-hub/compare/v0.1.0-alpha.1...main
+[Unreleased]: https://github.com/mithilkatkoria/draey-codex-hub/compare/v0.1.0-alpha.2...main
 [0.1.0-alpha.1]: https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.1
+
+[0.1.0-alpha.2]: https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.2
