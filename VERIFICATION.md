@@ -1,88 +1,39 @@
-# Existing-workspace launcher correction
+# Verification status
 
-Updated 6 September 2026.
+Updated 6 September 2026. This document separates observed behavior from pending acceptance.
 
-The user's corrected requirement is one existing Codex Desktop workspace across
-all accounts. Separate desktop profiles must not be used for normal launches.
+## Account handoff implemented
 
-## Implemented
+All normal launches use the existing `~/.codex` workspace and default Codex Desktop data. No separate Electron directory is supplied. Project files, task databases, sidebar state, and configuration remain in place; only file-based `auth.json` credentials are transferred.
 
-- Launch the installed Codex Desktop executable with the existing `~/.codex` home.
-  Do not set a separate Electron user-data directory or `--user-data-dir`.
-- Preserve projects, sidebar state, sessions, databases, and configuration in place.
-  Account handoff transfers only `auth.json`.
-- Opening the account already selected in the workspace invokes the normal
-  Desktop single-instance handoff.
-- Selecting a different account waits up to ten minutes for all Codex Desktop
-  processes to exit. The Hub never terminates Desktop. The user can cancel.
-- After Desktop exits, serialize the switch against Hub refresh/sign-in operations,
-  back up outgoing authentication locally, update its matching saved account slot,
-  atomically activate the selected authentication, and request a managed token
-  refresh through `account/read` before opening the existing workspace.
-- Restore outgoing authentication if verification fails before Desktop opens.
-- Route usage requests for the active account to the existing workspace, avoiding
-  reuse of stale refresh tokens in its dormant account slot.
-- Local identity routing includes token subject and account/organization ID;
-  decoded identity is only a routing hint, not proof of authentication.
-- Keep unavailable reset-credit counts unavailable; no reset redemption is performed.
+For a different saved account while Codex is open, the Hub waits for sign-out or a manual quit. After sign-out, it checks the missing authentication file and a fresh app-server `account/read` response, sends a normal close request to the default Codex window, and waits for exit. It does not kill Codex. If Codex stays in the background or asks about unfinished work, the user must finish quitting; timeout leaves authentication unchanged.
 
-Authentication backups are stored under local Hub application data in
-`auth-backups`. They contain sensitive Codex credentials and are never included
-in Hub configuration exports or diagnostics. No credentials are logged.
+The selected login is activated only after exit, verified with Codex app-server, and retained in its saved slot. Failure before launch restores the prior login. The Hub keeps matching saved credentials current between usage refreshes while open or in the tray. Backups stay in local Hub application data and are never exported.
 
-## Verified
+## Passed in this development session
 
-- Native regression tests: 13 passed, including A/B/A token rotation, preservation
-  of project/task/config files, backup and rollback, refusing a running Desktop,
-  and aborting if Desktop reopens during backup.
-- Frontend tests: 10 passed, including independent startup refreshes, dynamic
-  Pro windows, no fabricated missing values, command palette, and switch cancel UI.
-- Native Hub startup: all four saved real accounts refreshed automatically.
-- Read-only native check: all four saved authentication files were valid, and the
-  existing workspace matched Plus 2 at that check. A later standalone-app check
-  showed Plus 1 selected; this was not treated as proof of an A/B switch by this task.
-- Clicking the current account in the Hub reused the existing Desktop process
-  roots rather than creating another separate desktop profile.
-- Clicking Plus 1 displayed the waiting state. Canceling cleared it and left
-  the existing workspace account unchanged. No account switch was left queued.
-- Visually inspected the native Hub with the workspace notice, four real account
-  cards, dynamic allowances, and cancellation state.
-- Standalone embedded-UI executable opened successfully from `artifacts` and
-  refreshed all four real accounts. The subsequent custom-protocol native build
-  completed successfully too.
+- 16 native tests: credential rotation and A/B/A handoff using fixtures, logout preservation, rollback, workspace-file preservation, process classification, protocol launch settings, usage parsing, and storage recovery.
+- 13 frontend tests: independent startup requests, cache aging, dynamic Pro windows, missing-value handling, switch cancellation, window controls, and command search.
+- 5 release-tool tests: manifest and displayed-version updates, version progression, and changelog preparation.
+- Frontend production build and native embedded-UI Windows debug build.
+- Four real saved accounts refreshed independently on native Hub startup. Actual plans included Plus, Team, and Pro (`prolite`), with distinct account-specific windows.
+- Read-only process check identified one default Desktop instance. Separate command-line or environment-based Desktop profiles are excluded from normal close requests.
+- At 14:21 UTC, the native Hub usage probe and Codex's own usage tool reported the same weekly use (37%), both reset timestamps, and two available reset credits. Session use was 26% then 27% in successive live responses while this task was consuming usage. This was not an identical simultaneous snapshot.
+- Native UI: maximize/restore state, settings navigation, installation diagnostics, preferences save, and Ctrl+K individual refresh were exercised. The dashboard uses real data; screenshots containing personal identities are not included in the public repository.
 
-## Not yet verified / limitations
+## Pending real acceptance
 
-- No completed real A/B/A Desktop account switch has been performed with this
-  corrected launcher. Doing that requires quitting the Codex app hosting the
-  current work, then checking the reopened app's actual identity and sidebar.
-- File identity is not proof of the identity already cached by a running Desktop.
-  If authentication was changed externally while Desktop was open, quit Desktop
-  fully and reopen before relying on the selected account indication.
-- Keyring/automatic credential stores are deliberately rejected; the existing
-  configuration is preserved. The current machine uses file authentication.
-- Other independent Codex CLI processes are not controlled by the Hub. Finish
-  those before switching the shared home if they are using its authentication.
-- A further live usage comparison was rejected by automatic approval review due
-  to workspace credit exhaustion. That rejected operation was not retried through
-  a different execution path.
-- This is a test build, not a release-certified installer. Installer/release
-  acceptance requires the full real account-switch check above.
+A completed sign-out → selected saved account → restarted Desktop → original sidebar → switch back has **not yet been observed** in this session. Fixture tests and file identity do not prove the account cached inside a running Desktop. The test build has been opened for the user; the manual sign-out/reopened identity check is pending.
+
+The current task itself runs inside Codex. An actual restart interrupts it, so resume the task after checking the reopened account. Do not describe the alpha as production-certified account switching until that check passes.
+
+Other independent CLI sessions are not controlled by the Hub. Finish their work before changing shared authentication. Keyring and automatic credential stores are deliberately rejected for switching without modifying configuration.
 
 ## Manual acceptance
 
-1. Finish work in Codex. Keep the Hub open.
-2. Choose a different connected account in the Hub. Observe the waiting notice.
-3. Quit all Codex Desktop instances, including old separate-profile windows.
-4. Allow the Hub to reopen Codex. Confirm the displayed account, the original
-   sidebar projects, and existing tasks. No fresh browser login should be needed.
-5. Repeat with the previous account. Confirm both identity and original workspace.
-6. Compare every reported usage window with Codex for the same account and time.
-
-Build the standalone test executable with `pnpm tauri build --debug --no-bundle`
-after adding the installed Rust toolchain's `bin` directory to PATH. The output is
-`src-tauri/target/debug/draey-codex-hub.exe`.
-
-The standalone executable visually tested in this task is
-`artifacts/Draey Codex Hub - workspace fix.exe` (16,888,320 bytes).
-SHA-256: `2A95AA9223538D6FF532667B5C26CBC96EB5E95265C7AA524A333437DE0157E3`.
+1. Keep the updated Hub open and finish work in Codex.
+2. Sign out inside Codex, then click a connected saved account in the Hub. Alternatively, choose the account first and follow the notice.
+3. Let Codex close normally; respond to any unfinished-work prompt. If closing to the background prevents exit, quit from Codex's menu and retry.
+4. Confirm the reopened Codex account is the selected identity, the original sidebar projects and tasks remain, and no new browser login is required.
+5. Repeat with the previous saved account and confirm its identity too.
+6. Compare usage windows for that account at the same time. Record differences rather than assuming a successful process launch proves account switching.

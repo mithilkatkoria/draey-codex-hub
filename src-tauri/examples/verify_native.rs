@@ -1,10 +1,11 @@
 //! Native integration checks using the same Rust protocol and launch implementation as the Hub.
-use draey_hub::{codex,workspace,storage,model::{Settings},usage};
+use draey_hub::{codex,workspace,storage,desktop,model::{Settings},usage};
 use std::path::PathBuf;
 #[tokio::main]
 async fn main() {
  let args:Vec<String>=std::env::args().collect();
  let result=match args.get(1).map(String::as_str) {
+  Some("desktop-check")=>desktop_check(),
   Some("workspace-check")=>workspace_check(),
   Some("usage")=>usage_check(args.get(2).map(PathBuf::from)).await,
 
@@ -26,4 +27,10 @@ fn workspace_check()->Result<(),String>{
  workspace::ensure_file_store(&home)?;
  let profiles:Vec<_>=store.profiles.iter().map(|p|serde_json::json!({"name":p.name,"usesExistingWorkspaceAuth":workspace::is_active(p,&home).unwrap_or(false),"authFileValid":workspace::Auth::read(&p.home).is_ok_and(|a|a.is_some())})).collect();
  println!("{}",serde_json::json!({"desktopRunning":codex::desktop_running(),"workspace":home,"profiles":profiles}));Ok(())
+}
+
+fn desktop_check()->Result<(),String>{
+ let install=codex::detect(&Settings::default());let exe=install.desktop.ok_or("No desktop detected")?;
+ let home=workspace::shared_home()?;
+ println!("{}",serde_json::json!({"defaultDesktopCount":desktop::main_processes(&exe)?.len(),"signedOut":workspace::signed_out(&home)?}));Ok(())
 }

@@ -23,7 +23,7 @@ This is an account-management tool, not a way to increase allowances or bypass a
 
 ## Download for Windows
 
-**[Download v0.1.0-alpha.1](https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.1)**
+**[Download v0.1.0-alpha.2](https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.2)**
 
 1. Download `Draey-Codex-Hub-Windows.zip` from the release's **Assets** section. GitHub's automatic **Source code** downloads do not contain the app.
 2. Extract the ZIP and double-click **Draey Codex Hub.exe**. A standalone `.exe` is also attached to the release.
@@ -42,7 +42,7 @@ The download is an unsigned x64 Windows test build, also tested on Windows ARM t
 
 ## Account switching and local data
 
-Choose an account in the Hub. If another account is selected while Codex is running, save your work and quit all Codex Desktop windows. Keep the Hub open; it waits for Desktop to exit before changing authentication and reopening the existing workspace. You can cancel while waiting.
+Sign out inside Codex, then click a saved account in the Hub. The Hub detects sign-out, requests a normal Codex restart, and loads the saved login in the existing workspace. You can also choose the account first and follow the waiting notice, or quit Codex manually. If Codex asks about unfinished work or remains in the background, finish quitting from its menu. You can cancel while waiting; the Hub never force-kills Codex. This revised flow is still awaiting full real A/B/A Desktop acceptance.
 
 Projects, tasks, desktop data, and configuration stay in place. The Hub transfers only local `auth.json` credentials, retains a recovery backup, and serializes switching against its own authentication operations. Finish independent CLI work before switching too. File-based credentials are currently required; other credential-store configurations are preserved and rejected for switching.
 
@@ -74,7 +74,7 @@ pnpm package
 # src-tauri/target/release/bundle/nsis/
 ```
 
-The downloadable alpha was built from the earlier locally tested snapshot before repository documentation was added; it is not represented as a reproducible build of the repository tag. Its checksum is supplied with the release. Future source builds use the commands above.
+The initial alpha.1 download preceded its documentation commit. New release packages are built from their versioned source and include SHA-256 checksums. See each release for the exact tested scope.
 
 ## Tests and project layout
 
@@ -126,4 +126,4 @@ Copyright © 2026 Mithil Katkoria. See [LICENSE](LICENSE) for code permissions a
 
 ## Versioning
 
-The public download is currently **v0.1.0-alpha.1**, not v1.0. Future releases use `MAJOR.MINOR.PATCH`: fixes such as `1.0.1`, smaller compatible features such as `1.1.0`, and major/breaking changes such as `2.0.0`. Every commit is tracked in Git; every published release gets its own tag and changelog entry. See [RELEASING.md](RELEASING.md).
+The public download is currently **v0.1.0-alpha.2**, not v1.0. Future releases use `MAJOR.MINOR.PATCH`: fixes such as `1.0.1`, smaller compatible features such as `1.1.0`, and major/breaking changes such as `2.0.0`. Every commit is tracked in Git; every published release gets its own tag and changelog entry. See [RELEASING.md](RELEASING.md).

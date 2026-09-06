@@ -48,7 +48,7 @@ export function prepare(files,input,date) {
   }
   out['src-tauri/Cargo.toml']=files['src-tauri/Cargo.toml'].replace(/(\[package\][\s\S]*?\nversion\s*=\s*")[^"]+(" )?/,(_,prefix,suffix)=>prefix+next+(suffix??''));
   out['src-tauri/Cargo.lock']=files['src-tauri/Cargo.lock'].replace(/(\[\[package\]\]\s*\nname = "draey-codex-hub"\s*\nversion = ")[^"]+/,`$1${next}`);
-  out['src/App.tsx']=files['src/App.tsx'].replace(/v\d+\.\d+\.\d+(?:-[\w.-]+)?(?=\s*Â·\s*Windows)/g,`v${next}`);
+  out['src/App.tsx']=files['src/App.tsx'].replace(/v\d+\.\d+\.\d+(?:-[\w.-]+)?(?=\s*(?:\u00c2)?\u00b7\s*Windows)/g,`v${next}`);
   const heading='## [Unreleased]';
   if(!files['CHANGELOG.md'].includes(heading))throw new Error('CHANGELOG.md must contain an Unreleased section.');
   if(files['CHANGELOG.md'].includes(`## [${next}]`))throw new Error('Version already exists in changelog.');

@@ -29,7 +29,7 @@ pub fn detect(s: &Settings) -> Installation {
  if cli.is_none() {if let Some(local)=dirs::data_local_dir(){if let Ok(entries)=std::fs::read_dir(local.join("OpenAI/Codex/bin")){let mut versions:Vec<_>=entries.flatten().collect();versions.sort_by_key(|e|std::cmp::Reverse(e.metadata().and_then(|m|m.modified()).ok()));cli=versions.into_iter().map(|e|e.path().join("codex.exe")).find(|p|executable(p));}}}
  if cli.is_none() {cli=desktop.as_ref().and_then(|p|p.parent()).map(|p|p.join("resources/codex.exe")).filter(|p|executable(p));}
  let existing_home=dirs::home_dir().map(|p|p.join(".codex")).filter(|p|p.is_dir());
- Installation {desktop,cli,existing_home,isolation:"Accounts share your existing Codex workspace. Switching waits for Codex to quit; projects and desktop data stay in place.".into()}
+ Installation {desktop,cli,existing_home,isolation:"Accounts share your existing Codex workspace. Sign out in Codex to load a saved login after a normal restart; projects and desktop data stay in place.".into()}
 }
 pub struct Rpc {child:Child,input:ChildStdin,lines:Lines<BufReader<ChildStdout>>,next_id:u64}
 pub fn identity_key(account:&Value)->Result<String,String>{use sha2::{Digest,Sha256};let email=account.get("email").and_then(Value::as_str).filter(|s|!s.is_empty()).ok_or("Codex returned no account identity. Reconnect to validate this profile.")?;let discriminator=account.get("accountId").and_then(Value::as_str).unwrap_or("");Ok(format!("{:x}",Sha256::digest(format!("{}:{discriminator}",email.to_lowercase()).as_bytes())))}
@@ -39,7 +39,7 @@ impl Rpc {
   let input=child.stdin.take().ok_or("Codex stdin unavailable")?;
   let lines=BufReader::new(child.stdout.take().ok_or("Codex stdout unavailable")?).lines();
   let mut rpc=Self{child,input,lines,next_id:0};
-  rpc.call("initialize",json!({"clientInfo":{"name":"draey_codex_hub","title":"Draey Codex Hub","version":"0.1.0"},"capabilities":{"experimentalApi":false}})).await?;
+  rpc.call("initialize",json!({"clientInfo":{"name":"draey_codex_hub","title":"Draey Codex Hub","version":env!("CARGO_PKG_VERSION")},"capabilities":{"experimentalApi":false}})).await?;
   rpc.send(json!({"method":"initialized"})).await?;Ok(rpc)
  }
  async fn send(&mut self,v:Value)->Result<(),String> {let mut bytes=serde_json::to_vec(&v).map_err(|_|"Cannot encode Codex request")?;bytes.push(b'\n');self.input.write_all(&bytes).await.map_err(|_|"Codex connection closed".into())}
@@ -71,8 +71,8 @@ pub async fn launch(exe:&Path,home:&Path,project:Option<&Path>)->Result<String,S
  if !home.is_dir(){return Err("Your existing Codex workspace folder is missing.".into())}
  let mut child=clean_command(exe,home).args(launch_args(project)).current_dir(project.unwrap_or(home)).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).spawn().map_err(|_|"Windows could not launch Codex Desktop.")?;
  tokio::time::sleep(Duration::from_millis(900)).await;
- if let Some(status)=child.try_wait().map_err(|_|"Cannot inspect Codex launch")? {if !status.success(){return Err("Codex Desktop exited during launch. Your account is selected; retry opening Codex.".into())}return Ok("Opened your existing Codex workspace".into())}
- Ok("Opened your existing Codex workspace".into())
+ if let Some(status)=child.try_wait().map_err(|_|"Cannot inspect Codex launch")? {if !status.success(){return Err("Codex Desktop exited during launch. Your account is selected; retry opening Codex.".into())}return Ok("Codex launch requested".into())}
+ Ok("Codex launch requested".into())
 }
 #[cfg(test)] mod tests {
  use super::*;

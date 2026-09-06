@@ -66,6 +66,29 @@ pub fn usage_home(profile: &Profile, home: &Path) -> Result<PathBuf, String> {
     if is_active(profile, home)? { Ok(home.into()) } else { Ok(profile.home.clone()) }
 }
 
+/// Missing file is the file-store logout state. Permission errors and malformed
+/// credentials must not be mistaken for a logout and trigger a desktop restart.
+pub fn signed_out(home: &Path) -> Result<bool, String> {
+    ensure_file_store(home)?;
+    match fs::metadata(home.join("auth.json")) {
+        Ok(_) => Ok(false),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(true),
+        Err(_) => Err("Cannot determine whether Codex is signed out. Check workspace permissions.".into()),
+    }
+}
+
+/// Keep the active account's slot current before Desktop logout removes auth.json.
+/// A missing file never clears the saved slot; another identity never replaces it.
+pub fn sync_active_slot(profile: &Profile, home: &Path) -> Result<(), String> {
+    if profile.home == home { return Ok(()); }
+    let Some(active) = Auth::read(home)? else { return Ok(()); };
+    let Some(slot) = Auth::read(&profile.home)? else { return Ok(()); };
+    if active.identity == slot.identity && active.bytes != slot.bytes {
+        write_auth(&profile.home, &active.bytes)?;
+    }
+    Ok(())
+}
+
 fn write_auth(home: &Path, bytes: &[u8]) -> Result<(), String> {
     fs::create_dir_all(home).map_err(|_| "Cannot create local authentication storage.")?;
     let mut temp = tempfile::NamedTempFile::new_in(home).map_err(|_| "Cannot prepare authentication file.")?;
@@ -189,5 +212,25 @@ mod tests {
         let checks=std::cell::Cell::new(0);
         assert!(activate(&home,&p,&[p.clone()],&d.path().join("backups"),||{checks.set(checks.get()+1);checks.get()>1}).is_err());
         assert_eq!(fs::read(home.join("auth.json")).unwrap(),original);
+    }
+    #[test]
+    fn logout_preserves_the_latest_saved_login_and_can_activate_it_again() {
+        let d=tempfile::tempdir().unwrap();let home=d.path().join("workspace");let p=profile(d.path().join("slot"),"p");
+        auth(&p.home,"alice","org-a","old");let newest=auth(&home,"alice","org-a","rotated");
+        sync_active_slot(&p,&home).unwrap();assert_eq!(fs::read(p.home.join("auth.json")).unwrap(),newest);
+        fs::remove_file(home.join("auth.json")).unwrap();
+        assert!(signed_out(&home).unwrap());sync_active_slot(&p,&home).unwrap();
+        let tx=activate(&home,&p,&[p.clone()],&d.path().join("backups"),||false).unwrap();
+        assert_eq!(fs::read(home.join("auth.json")).unwrap(),newest);
+        tx.rollback().unwrap();assert!(signed_out(&home).unwrap());
+        assert_eq!(fs::read(p.home.join("auth.json")).unwrap(),newest);
+    }
+    #[test]
+    fn malformed_auth_is_not_logout_and_another_account_never_overwrites_the_slot() {
+        let d=tempfile::tempdir().unwrap();let home=d.path().join("workspace");let p=profile(d.path().join("slot"),"p");
+        let slot=auth(&p.home,"alice","org-a","a");auth(&home,"bob","org-b","b");
+        sync_active_slot(&p,&home).unwrap();assert_eq!(fs::read(p.home.join("auth.json")).unwrap(),slot);
+        fs::write(home.join("auth.json"),"broken").unwrap();assert!(!signed_out(&home).unwrap());
+        assert!(sync_active_slot(&p,&home).is_err());
     }
 }

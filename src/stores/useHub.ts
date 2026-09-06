@@ -12,7 +12,7 @@ export function useHub() {
  const ref=useRef(store);ref.current=store;
  const coordinator=useRef<RefreshCoordinator>(undefined);
  if(!coordinator.current) coordinator.current=new RefreshCoordinator(id=>native('refresh_usage',{id}),id=>ref.current.usageCache[id],(id,snapshot)=>setStore(s=>({...s,usageCache:{...s.usageCache,[id]:snapshot}})));
- async function reload(clearProfile?:string) {const next=await native<Store>('load_state');setStore(s=>({...next,usageCache:{...next.usageCache,...Object.fromEntries(Object.entries(s.usageCache).filter(([id])=>id!==clearProfile&&next.profiles.some(p=>p.id===id)))}}));return next;}
+ async function reload(clearProfile?:string) {const next=await native<Store>('load_state');const merged={...next,usageCache:{...next.usageCache,...Object.fromEntries(Object.entries(ref.current.usageCache).filter(([id])=>id!==clearProfile&&next.profiles.some(p=>p.id===id)))}};ref.current=merged;setStore(merged);return next;}
  useEffect(()=>{let cancelled=false;const disposers:(()=>void)[]=[];
   const subscribe=<T,>(name:string,handler:(p:T)=>void)=>{void onNative<T>(name,handler).then(off=>cancelled?off():disposers.push(off));};
   subscribe<{id:string;snapshot:Snapshot}>('usage-updated',({id,snapshot})=>setStore(s=>({...s,usageCache:{...s.usageCache,[id]:snapshot}})));
@@ -24,7 +24,8 @@ export function useHub() {
   void native<Store>('load_state').then(s=>{if(cancelled)return;for(const v of Object.values(s.usageCache))v.state='stale';setStore(s);ref.current=s;setLoaded(true);void coordinator.current!.all(s.profiles);}).catch(e=>{if(!cancelled){setError(String(e));setLoaded(true);}});
   void native<Installation>('detect_codex').then(i=>{if(!cancelled)setInstallation(i);}).catch(()=>{});
   const tick=window.setInterval(()=>setNow(Date.now()),1000);
-  return()=>{cancelled=true;disposers.forEach(f=>f());clearInterval(tick);};
+  const workspaceTick=window.setInterval(()=>{void refreshWorkspace();},3000);
+  return()=>{cancelled=true;disposers.forEach(f=>f());clearInterval(tick);clearInterval(workspaceTick);};
  },[]);
  useEffect(()=>{if(!loaded)return;let last=Date.now();const run=()=>{last=Date.now();void coordinator.current!.all(ref.current.profiles);};const focus=()=>{if(ref.current.settings.refreshOnFocus&&Date.now()-last>=15000)run();};const timer=setInterval(()=>{if(ref.current.settings.autoRefresh&&document.visibilityState==='visible')run();},store.settings.refreshSeconds*1000);window.addEventListener('focus',focus);return()=>{clearInterval(timer);window.removeEventListener('focus',focus);};},[loaded,store.settings.refreshSeconds]);
  async function launch(id:string,projectId:string|null=null){setError('');setBusy(s=>({...s,[id]:'Preparing profile…'}));try{const message=await native<string>('launch_profile',{id,projectId});await reload();setBusy(s=>({...s,[id]:message}));setTimeout(()=>{setBusy(s=>({...s,[id]:''}));void coordinator.current!.refresh(id);},1800);}catch(e){if(!String(e).startsWith('Account switch cancelled'))setError(String(e));setBusy(s=>({...s,[id]:''}));}finally{void refreshWorkspace();}}

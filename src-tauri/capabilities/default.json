@@ -1,1 +1,14 @@
-{"identifier":"main","description":"Local Hub window","windows":["main"],"permissions":["core:default"]}
+{
+  "identifier": "main",
+  "description": "Local Hub window",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "core:window:allow-start-dragging"
+  ]
+}

@@ -3,6 +3,7 @@ pub mod storage;
 pub mod usage;
 pub mod codex;
 pub mod workspace;
+pub mod desktop;
 use model::*;
 use std::{collections::HashMap,path::PathBuf,sync::{Arc,Mutex}};
 use tauri::{Emitter,Manager,State};
@@ -56,7 +57,7 @@ fn set_startup(enabled:bool)->Result<(),String>{
 async fn refresh(app:&tauri::AppHandle,id:String)->Result<Snapshot,String>{
  let hub=app.state::<Hub>();let _workspace_guard=hub.workspace_gate.read().await;let op=hub.operation(&id);let _guard=op.try_lock().map_err(|_|"Profile is busy connecting or launching. Try again shortly.")?;let p=hub.profile(&id)?;
  let cli=codex::detect(&hub.read().settings).cli.ok_or("Codex CLI was not found. Locate it in Settings.")?;
- let result=async {let home=workspace::usage_home(&p,&workspace::shared_home()?)?;let mut rpc=codex::Rpc::start(&cli,&home).await?;let account=rpc.account().await?;let key=codex::identity_key(&account)?;if p.identity_key.as_ref().is_some_and(|expected|expected!=&key){return Err("AUTH_REQUIRED: This folder now contains a different account. Reconnect deliberately before using it.".into())}let value=rpc.call("account/rateLimits/read",json!({})).await?;let snapshot=usage::parse(&value)?;rpc.stop().await;hub.update(|s|{if let Some(p)=s.profiles.iter_mut().find(|p|p.id==id){p.identity_key=Some(key);p.account_email=account.get("email").and_then(Value::as_str).map(String::from);p.actual_plan=account.get("planType").and_then(Value::as_str).map(String::from);}Ok(())})?;Ok::<_,String>(snapshot)}.await;
+ let result=async {let home=workspace::usage_home(&p,&workspace::shared_home()?)?;let mut rpc=codex::Rpc::start(&cli,&home).await?;let account=rpc.account().await?;let key=codex::identity_key(&account)?;if p.identity_key.as_ref().is_some_and(|expected|expected!=&key){return Err("AUTH_REQUIRED: This folder now contains a different account. Reconnect deliberately before using it.".into())}let value=rpc.call("account/rateLimits/read",json!({})).await?;let snapshot=usage::parse(&value)?;rpc.stop().await;workspace::sync_active_slot(&p,&home)?;hub.update(|s|{if let Some(p)=s.profiles.iter_mut().find(|p|p.id==id){p.identity_key=Some(key);p.account_email=account.get("email").and_then(Value::as_str).map(String::from);p.actual_plan=account.get("planType").and_then(Value::as_str).map(String::from);}Ok(())})?;Ok::<_,String>(snapshot)}.await;
  let snapshot=match result {Ok(snapshot)=>{hub.update(|s|{if let Some(p)=s.profiles.iter_mut().find(|p|p.id==id){p.connection="connected".into();s.usage_cache.insert(id.clone(),snapshot.clone());}Ok(())})?;snapshot},Err(message)=>{let state=if message.starts_with("AUTH_REQUIRED") {"auth-required"}else if message.starts_with("OFFLINE") {"offline"}else {"unavailable"};let mut snapshot=hub.read().usage_cache.get(&id).cloned().unwrap_or(Snapshot{windows:vec![],fetched_at:String::new(),source:"Codex app-server".into(),state:state.into(),message:None,reset_credits:None});snapshot.state=state.into();snapshot.message=Some(message);if state=="auth-required" {hub.update(|s|{if let Some(p)=s.profiles.iter_mut().find(|p|p.id==id){p.connection="auth-required".into();}Ok(())})?;}snapshot}};
  let _=app.emit("usage-updated",json!({"id":id,"snapshot":snapshot}));if let Ok(profile)=hub.profile(&id){let _=app.emit("profile-updated",profile);}update_tray(app);Ok(snapshot)
 }
@@ -90,7 +91,7 @@ fn switch_progress(app:&tauri::AppHandle,id:&str,stage:&str,message:&str) {
  let value=json!({"id":id,"stage":stage,"message":message});
  *hub.pending_switch.lock().unwrap()=Some(value.clone());
  let _=app.emit("workspace-switch",Some(value));
- let _=app.emit("launch-progress",json!({"id":id,"message":if stage=="waiting" {"Waiting for Codex to quit…"}else{message}}));
+ let _=app.emit("launch-progress",json!({"id":id,"message":if stage=="waiting" {"Sign out in Codex to continue…"}else{message}}));
  show(app);
 }
 #[tauri::command] fn workspace_status(hub:State<Hub>)->Result<Value,String> {
@@ -119,12 +120,21 @@ async fn launch_in_workspace(app:&tauri::AppHandle,id:&str,project_id:Option<Str
  workspace::ensure_file_store(&home)?;
  let p=hub.profile(id)?;
  if workspace::Auth::read(&p.home)?.is_none(){return Err("Connect this account first.".into());}
- if !workspace::is_active(&p,&home)? && codex::desktop_running() {
-  switch_progress(app,id,"waiting",&format!("Ready to switch to {}. Save your work and quit all Codex windows. Keep the Hub open; it will reopen your existing workspace automatically. You can cancel without changing accounts.",p.name));
-  let wait=async {while codex::desktop_running(){tokio::time::sleep(std::time::Duration::from_secs(2)).await;}};
+ let install=codex::detect(&hub.read().settings);
+ let exe=install.desktop.ok_or("Codex Desktop was not found. Locate it in Settings.")?;
+ let cli=install.cli.ok_or("Codex CLI is needed to verify the selected account.")?;
+ if !workspace::is_active(&p,&home)? && desktop::running(&exe) {
+  switch_progress(app,id,"waiting",&format!("To use {}, sign out inside Codex. Keep the Hub open: it will detect sign-out, request a normal restart, and use this saved login in your existing workspace. You can also quit Codex to continue.",p.name));
+  let wait=async {
+   while desktop::running(&exe) {
+    if workspace::signed_out(&home)? {return Ok::<(),String>(());}
+    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+   }
+   Ok(())
+  };
   tokio::select! {
    _=cancel.notified()=>return Err("Account switch cancelled. Your workspace is unchanged.".into()),
-   result=tokio::time::timeout(std::time::Duration::from_secs(600),wait)=>{result.map_err(|_|"Account switch expired. Quit Codex and choose the account again; nothing was changed.")?;}
+   result=tokio::time::timeout(std::time::Duration::from_secs(600),wait)=>{result.map_err(|_|"Account switch expired. Sign out in Codex or quit it, then select the saved account again. Nothing was changed.")??;}
   }
  }
  // Short exclusive section: wait for independent refresh/login operations to finish.
@@ -136,18 +146,39 @@ async fn launch_in_workspace(app:&tauri::AppHandle,id:&str,project_id:Option<Str
  let p=hub.profile(id)?;let store=hub.read();
  let project=match project_id.as_ref(){Some(id)=>Some(store.projects.iter().find(|p|&p.id==id).ok_or("Project no longer exists")?),None=>None};
  if let Some(p)=project{directory(&p.path)?;}
- let installation=codex::detect(&store.settings);
- let exe=installation.desktop.ok_or("Codex Desktop was not found. Locate it in Settings.")?;
- let cli=installation.cli.ok_or("Codex CLI is needed to verify the selected account.")?;
  let active=workspace::is_active(&p,&home)?;
- if !active && codex::desktop_running(){return Err("Codex reopened before switching. Quit it and choose the account again; nothing was changed.".into());}
+ if !active && desktop::running(&exe) && !workspace::signed_out(&home)?{return Err("Codex is signed in again. Sign out or quit Codex, then select the saved account. Nothing was changed.".into());}
  switch_progress(app,id,"switching","Verifying the selected account…");
  let source=workspace::usage_home(&p,&home)?;
  let mut rpc=codex::Rpc::start(&cli,&source).await?;
  let key=codex::identity_key(&rpc.account().await?)?;rpc.stop().await;
  if p.identity_key.as_ref()!=Some(&key){return Err("The saved account identity could not be verified. Reconnect it before switching.".into());}
+ if !active && desktop::running(&exe) {
+  // A new RPC confirms file-store logout, but cannot reload the already-running
+  // Desktop's in-memory authentication. Close it normally before installing auth.
+  let mut rpc=codex::Rpc::start(&cli,&home).await?;
+  let state=rpc.call("account/read",json!({"refreshToken":false})).await?;rpc.stop().await;
+  if state.get("account")!=Some(&Value::Null) || !workspace::signed_out(&home)? {
+   return Err("Codex has not finished signing out. Complete sign-out and choose the saved account again.".into());
+  }
+  switch_progress(app,id,"restarting","Sign-out detected. Restarting Codex to load your saved login. If Codex asks about unfinished work, respond there. Your projects and tasks stay in place.");
+  desktop::request_signed_out_close(&exe,&home)?;
+  let closed=async {
+   while desktop::running(&exe){
+    if !workspace::signed_out(&home)? {return Err("Codex signed in again while restarting. No authentication was replaced.".to_string());}
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+   }
+   Ok::<(),String>(())
+  };
+  tokio::select! {
+   _=cancel.notified()=>return Err("Account switch cancelled. No saved login was installed; Codex may already have closed.".into()),
+   result=tokio::time::timeout(std::time::Duration::from_secs(30),closed)=>{result.map_err(|_|"Codex did not finish closing. Quit it from its menu and choose the saved account again. The Hub has not changed authentication.")??;}
+  }
+  if !workspace::signed_out(&home)? {return Err("Authentication changed while Codex was closing. Select the account again.".into());}
+ }
  if !active {
-  let tx=workspace::activate(&home,&p,&store.profiles,&hub.path.parent().unwrap().join("auth-backups"),codex::desktop_running)?;
+  switch_progress(app,id,"switching","Loading and verifying your saved login…");
+  let tx=workspace::activate(&home,&p,&store.profiles,&hub.path.parent().unwrap().join("auth-backups"),||desktop::running(&exe))?;
   let verification=async {
    let mut rpc=codex::Rpc::start(&cli,&home).await?;
    let actual=codex::identity_key(&rpc.verify_account().await?)?;rpc.stop().await;
@@ -155,10 +186,11 @@ async fn launch_in_workspace(app:&tauri::AppHandle,id:&str,project_id:Option<Str
    Ok::<(),String>(())
   }.await;
   if let Err(error)=verification {
-   if codex::desktop_running(){return Err(format!("{error} Codex reopened during verification; recovery backup preserved."));}
+   if desktop::running(&exe){return Err(format!("{error} Codex reopened during verification; recovery backup preserved."));}
    tx.rollback()?;return Err(format!("{error} Your previous authentication was restored."));
   }
  }
+ workspace::sync_active_slot(&p,&home)?;
  let result=codex::launch(&exe,&home,project.map(|p|p.path.as_path())).await?;
  hub.update(|s|{if let Some(p)=s.profiles.iter_mut().find(|p|p.id==id){p.last_used_at=Some(now());}if let Some(id)=project_id {if let Some(p)=s.projects.iter_mut().find(|p|p.id==id){p.last_opened_at=Some(now())}}Ok(())})?;
  if store.settings.hide_after_launch{if let Some(w)=app.get_webview_window("main"){let _=w.hide();}}
@@ -188,6 +220,23 @@ async fn launch_in_workspace(app:&tauri::AppHandle,id:&str,project_id:Option<Str
  hub.update(|s|{s.profiles.extend(profiles);s.projects.extend(projects);Ok(())})?;update_tray(&app);Ok(true)
 }
 fn show(app:&tauri::AppHandle){if let Some(w)=app.get_webview_window("main"){let _=w.show();let _=w.unminimize();let _=w.set_focus();}}
+fn keep_saved_login_current(app:tauri::AppHandle) {
+ tauri::async_runtime::spawn(async move {
+  loop {
+   tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+   let hub=app.state::<Hub>();
+   let Ok(_workspace)=hub.workspace_gate.try_read() else{continue};
+   let Ok(home)=workspace::shared_home() else{continue};
+   // Desktop can rotate credentials between usage refreshes. Preserve its latest
+   // file in the matching slot, including while the Hub is hidden in the tray.
+   for profile in hub.read().profiles {
+    let operation=hub.operation(&profile.id);
+    let Ok(_guard)=operation.try_lock() else{continue};
+    let _=workspace::sync_active_slot(&profile,&home);
+   }
+  }
+ });
+}
 fn update_tray(app:&tauri::AppHandle){use tauri::menu::{Menu,MenuItem};let Ok(menu)=Menu::new(app) else{return};let add=|id:String,label:String|{if let Ok(item)=MenuItem::with_id(app,id,label,true,None::<&str>){let _=menu.append(&item);}};add("dashboard".into(),"Draey Codex Hub".into());for p in app.state::<Hub>().read().profiles{add(format!("profile:{}",p.id),format!("Open {} · {}",p.name,p.availability.replace('-'," ")));}add("refresh".into(),"Refresh all limits".into());add("settings".into(),"Settings".into());add("quit".into(),"Quit Hub".into());if let Some(tray)=app.tray_by_id("hub"){let _=tray.set_menu(Some(menu));}}
 pub fn run(){
  let builder=tauri::Builder::default().plugin(tauri_plugin_single_instance::init(|app,_,_|show(app))).setup(|app|{
@@ -196,6 +245,7 @@ pub fn run(){
   let icon=tauri::image::Image::from_bytes(include_bytes!("../icons/32x32.png"))?;
   tauri::tray::TrayIconBuilder::with_id("hub").icon(icon).tooltip("Draey Codex Hub").on_menu_event(|app,event|{let id=event.id.as_ref();match id {"quit"=>app.exit(0),"dashboard"=>show(app),"settings"=>{show(app);let _=app.emit("navigate","settings");},"refresh"=>{let app=app.clone();let profiles=app.state::<Hub>().read().profiles;for p in profiles{let app=app.clone();tauri::async_runtime::spawn(async move{let _=refresh(&app,p.id).await;});}},_=>{if let Some(id)=id.strip_prefix("profile:"){let app=app.clone();let id=id.to_string();tauri::async_runtime::spawn(async move{if let Err(e)=launch_profile(app.clone(),id,None).await{show(&app);let _=app.emit("hub-error",e);}});}}}}).build(app)?;
   update_tray(app.handle());
+  keep_saved_login_current(app.handle().clone());
   if std::env::args().any(|a|a=="--background"){if let Some(w)=app.get_webview_window("main"){let _=w.hide();}}
   Ok(())
  }).on_window_event(|w,event|{if let tauri::WindowEvent::CloseRequested{api,..}=event {if w.app_handle().state::<Hub>().read().settings.minimize_to_tray{api.prevent_close();let _=w.hide();}}})

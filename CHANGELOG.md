@@ -4,7 +4,16 @@ All published releases receive an immutable Git tag and an entry here. Unrelease
 
 ## [Unreleased]
 
+### Fixed
+- Detect Codex sign-out while an account switch is waiting and request a normal restart of the default Desktop window before loading the saved login.
+- Preserve refreshed credentials in the matching saved account slot before logout removes the workspace login.
+- Avoid waiting for unrelated isolated Desktop instances; reject unreadable process state instead of assuming Codex is closed.
+- Keep Node release-tool tests separate from Vitest dashboard tests.
+
+The signed-out restart flow still requires real Desktop acceptance; no production-readiness claim is made.
+
 ### Added
+- Finished native window controls, responsive graphite dashboard, account filters, and readable allowance cards.
 - Multi-account usage guide, FAQ, and repository discovery metadata.
 - Copyright/attribution and project-identity guidance.
 - Version preparation command and CI consistency check.
