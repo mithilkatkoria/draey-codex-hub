@@ -56,7 +56,7 @@ Other independent CLI sessions are not controlled by the Hub. Finish their work 
 - Frontend startup tests cover five accounts with three requests in flight, independent completion, and queued accounts starting as slots free. A 30-request test covers failures without starving later accounts.
 - Visibility tests confirm display polling stops while hidden, resumes on return, and does not overlap slow requests. Native authentication backup monitoring remains active to preserve rotated credentials.
 - Installed in an explicit user Applications folder with a valid Start menu shortcut. The running Hub was an Explorer child, separate from Codex. Native UI exposed all four saved profiles and one project after installation.
-- An earlier probe found a revoked login for one profile. A later native readout at 20:42 UTC showed all four accounts live. No credentials were fabricated or manually repaired by the agent.
+- An earlier probe found a revoked login for one profile. A later native readout at 20:42 local time showed all four accounts live. No credentials were fabricated or manually repaired by the agent.
 - Computer-control inspection was stopped by the user's Escape key. Subsequent layout tests used a headless local preview with synthetic data only.
 - Updates are manual in this release. Settings opens GitHub releases. Install newer setup files over the app, or replace the closed portable EXE. The separate account store is preserved. No automatic updater is claimed.
 
