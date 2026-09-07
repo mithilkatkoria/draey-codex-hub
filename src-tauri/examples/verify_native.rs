@@ -6,6 +6,8 @@ async fn main() {
  let args:Vec<String>=std::env::args().collect();
  let result=match args.get(1).map(String::as_str) {
   Some("desktop-check")=>desktop_check(),
+  Some("host-check")=>draey_hub::host::is_codex_package().map(|packaged|println!("{}",serde_json::json!({"insideCodexPackage":packaged}))),
+  Some("recover")=>storage::load_current().map(|(path,store)|println!("{}",serde_json::json!({"storage":path,"profilesRecovered":store.profiles.len(),"projects":store.projects.len()}))),
   Some("workspace-check")=>workspace_check(),
   Some("usage")=>usage_check(args.get(2).map(PathBuf::from)).await,
 
@@ -22,7 +24,7 @@ async fn usage_check(home:Option<PathBuf>)->Result<(),String>{
 }
 
 fn workspace_check()->Result<(),String>{
- let path=dirs::data_local_dir().ok_or("No app data")?.join("dev.draey.codexhub/hub.json");
+ let path=storage::root()?.join("hub.json");
  let store=storage::load(&path)?;let home=workspace::shared_home()?;
  workspace::ensure_file_store(&home)?;
  let profiles:Vec<_>=store.profiles.iter().map(|p|serde_json::json!({"name":p.name,"usesExistingWorkspaceAuth":workspace::is_active(p,&home).unwrap_or(false),"authFileValid":workspace::Auth::read(&p.home).is_ok_and(|a|a.is_some())})).collect();
@@ -32,5 +34,5 @@ fn workspace_check()->Result<(),String>{
 fn desktop_check()->Result<(),String>{
  let install=codex::detect(&Settings::default());let exe=install.desktop.ok_or("No desktop detected")?;
  let home=workspace::shared_home()?;
- println!("{}",serde_json::json!({"defaultDesktopCount":desktop::main_processes(&exe)?.len(),"signedOut":workspace::signed_out(&home)?}));Ok(())
+ println!("{}",serde_json::json!({"defaultDesktopCount":desktop::main_processes(&exe)?.len(),"signedOut":workspace::signed_out(&home)?,"normalQuitAvailable":desktop::can_request_quit(&exe)?}));Ok(())
 }

@@ -31,22 +31,23 @@ pub fn detect(s: &Settings) -> Installation {
  let existing_home=dirs::home_dir().map(|p|p.join(".codex")).filter(|p|p.is_dir());
  Installation {desktop,cli,existing_home,isolation:"Accounts share your existing Codex workspace. Sign out in Codex to load a saved login after a normal restart; projects and desktop data stay in place.".into()}
 }
-pub struct Rpc {child:Child,input:ChildStdin,lines:Lines<BufReader<ChildStdout>>,next_id:u64}
+pub struct Rpc {child:Child,input:ChildStdin,lines:Lines<BufReader<ChildStdout>>,next_id:u64,notifications:std::collections::VecDeque<Value>}
 pub fn identity_key(account:&Value)->Result<String,String>{use sha2::{Digest,Sha256};let email=account.get("email").and_then(Value::as_str).filter(|s|!s.is_empty()).ok_or("Codex returned no account identity. Reconnect to validate this profile.")?;let discriminator=account.get("accountId").and_then(Value::as_str).unwrap_or("");Ok(format!("{:x}",Sha256::digest(format!("{}:{discriminator}",email.to_lowercase()).as_bytes())))}
 impl Rpc {
  pub async fn start(exe:&Path,home:&Path) -> Result<Self,String> {
   let mut child=clean_command(exe,home).args(["app-server","--listen","stdio://"]).current_dir(home).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::null()).kill_on_drop(true).spawn().map_err(|e|format!("Cannot start Codex app-server (Windows error {}). Check the CLI executable in Settings.",e.raw_os_error().unwrap_or(0)))?;
   let input=child.stdin.take().ok_or("Codex stdin unavailable")?;
   let lines=BufReader::new(child.stdout.take().ok_or("Codex stdout unavailable")?).lines();
-  let mut rpc=Self{child,input,lines,next_id:0};
+  let mut rpc=Self{child,input,lines,next_id:0,notifications:Default::default()};
   rpc.call("initialize",json!({"clientInfo":{"name":"draey_codex_hub","title":"Draey Codex Hub","version":env!("CARGO_PKG_VERSION")},"capabilities":{"experimentalApi":false}})).await?;
   rpc.send(json!({"method":"initialized"})).await?;Ok(rpc)
  }
  async fn send(&mut self,v:Value)->Result<(),String> {let mut bytes=serde_json::to_vec(&v).map_err(|_|"Cannot encode Codex request")?;bytes.push(b'\n');self.input.write_all(&bytes).await.map_err(|_|"Codex connection closed".into())}
- pub async fn next(&mut self)->Result<Value,String> {loop {let line=self.lines.next_line().await.map_err(|_|"Cannot read Codex response")?.ok_or("Codex app-server exited")?;if line.len()>4*1024*1024 {return Err("Codex response exceeded size limit".into())} if let Ok(value)=serde_json::from_str(&line) {return Ok(value)} }}
+ pub async fn next(&mut self)->Result<Value,String> {if let Some(v)=self.notifications.pop_front(){return Ok(v);}self.raw_next().await}
+ async fn raw_next(&mut self)->Result<Value,String> {loop {let line=self.lines.next_line().await.map_err(|_|"Cannot read Codex response")?.ok_or("Codex app-server exited")?;if line.len()>4*1024*1024 {return Err("Codex response exceeded size limit".into())} if let Ok(value)=serde_json::from_str(&line) {return Ok(value)} }}
  pub async fn call(&mut self,method:&str,params:Value)->Result<Value,String> {
   self.next_id+=1;let id=self.next_id;self.send(json!({"id":id,"method":method,"params":params})).await?;
-  tokio::time::timeout(Duration::from_secs(25),async {loop {let v=self.next().await?;if v.get("id").and_then(Value::as_u64)==Some(id) {if let Some(error)=v.get("error") {let message=error.get("message").and_then(Value::as_str).unwrap_or("").to_lowercase();return Err(if ["401","unauthorized","auth","login","sign in"].iter().any(|s|message.contains(s)) {"AUTH_REQUIRED: Reconnect this profile through OpenAI sign-in.".into()} else if ["network","connect","timeout","dns"].iter().any(|s|message.contains(s)) {"OFFLINE: Codex could not reach the usage service.".into()} else {"Codex could not complete the request. Retry or run diagnostics.".into()});}return v.get("result").cloned().ok_or("Malformed Codex response".into());} }}).await.map_err(|_|"OFFLINE: Codex did not respond within 25 seconds.".to_string())?
+  tokio::time::timeout(Duration::from_secs(25),async {loop {let v=self.raw_next().await?;if v.get("id").and_then(Value::as_u64)==Some(id) {if let Some(error)=v.get("error") {let message=error.get("message").and_then(Value::as_str).unwrap_or("").to_lowercase();return Err(if ["401","unauthorized","auth","login","sign in"].iter().any(|s|message.contains(s)) {"AUTH_REQUIRED: Reconnect this profile through OpenAI sign-in.".into()} else if ["network","connect","timeout","dns"].iter().any(|s|message.contains(s)) {"OFFLINE: Codex could not reach the usage service.".into()} else {"Codex could not complete the request. Retry or run diagnostics.".into()});}return v.get("result").cloned().ok_or("Malformed Codex response".into());} if v.get("method").is_some() && self.notifications.len()<256 {self.notifications.push_back(v);} }}).await.map_err(|_|"OFFLINE: Codex did not respond within 25 seconds.".to_string())?
  }
  pub async fn account(&mut self)->Result<Value,String> {self.read_account(false).await}
  pub async fn verify_account(&mut self)->Result<Value,String> {self.read_account(true).await}

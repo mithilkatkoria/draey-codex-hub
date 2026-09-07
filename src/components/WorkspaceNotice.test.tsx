@@ -19,3 +19,11 @@ it('shows a cancelable restart after sign-out rather than instructions to log in
  expect(screen.getByRole('status').textContent).toContain('Loading your saved account');
  fireEvent.click(screen.getByRole('button',{name:'Cancel switch'}));expect(cancel).toHaveBeenCalledOnce();
 });
+it('keeps the selected account cancelable when normal quit needs user attention',()=>{
+ const cancel=vi.fn();
+ render(<WorkspaceNotice profiles={[]} workspace={{home:'workspace',activeProfileId:null,pending:{id:'b',stage:'awaiting-quit',message:'Use File > Quit. Your account stays queued.'}}} onCancel={cancel}/>);
+ expect(screen.getByRole('status').textContent).toContain('Finish quitting Codex');
+ expect(screen.getByRole('status').textContent).toContain('stays queued');
+ expect(document.querySelector('.spin')).toBeNull();
+ fireEvent.click(screen.getByRole('button',{name:'Cancel switch'}));expect(cancel).toHaveBeenCalledOnce();
+});

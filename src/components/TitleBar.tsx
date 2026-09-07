@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Copy, Minus, Search, Square, X } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { nativeAvailable } from '../services/native';
+import brandMark from '../../src-tauri/icons/source.svg';
 
 export function TitleBar({onSearch,onError,closeToTray}:{onSearch:()=>void;onError:(message:string)=>void;closeToTray:boolean}) {
  const [maximized,setMaximized]=useState(false);
@@ -16,7 +17,7 @@ export function TitleBar({onSearch,onError,closeToTray}:{onSearch:()=>void;onErr
   try{await getCurrentWindow()[action]();}catch{onError('The window control could not complete. Try the Windows taskbar menu.');}
  }
  return <header className="window-bar">
-  <div className="window-brand" data-tauri-drag-region><span className="brand-symbol" aria-hidden="true"><span/><span/><span/></span><strong>draey</strong><span className="window-product">Codex Hub</span></div>
+  <div className="window-brand" data-tauri-drag-region><img className="brand-mark" src={brandMark} alt="" aria-hidden="true"/><strong>draey</strong><span className="window-product">Codex Hub</span></div>
   <div className="window-drag-space" data-tauri-drag-region/>
   <button className="window-search" onClick={onSearch}><Search size={14}/><span>Find an account, project, or action</span><kbd>Ctrl K</kbd></button>
   <div className="window-drag-space" data-tauri-drag-region/>

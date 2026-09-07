@@ -1,4 +1,4 @@
-param([string]$BuildDirectory = 'src-tauri/target/release')
+param([string]$BuildDirectory = 'src-tauri/target/x86_64-pc-windows-msvc/release')
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Push-Location $repo
@@ -22,8 +22,13 @@ add and connect your own accounts in the Hub. No personal data is bundled.
 
 Switching: sign out inside Codex, then choose a saved account in the Hub.
 The Hub requests a normal restart and retains your existing Codex workspace.
-If Codex remains in the background, quit it from its menu and retry.
+If Codex remains in the background, use File > Quit (Ctrl+Q). The selected
+account stays queued for up to ten minutes and continues after Codex exits.
 Real A/B/A Desktop acceptance is still pending; this is an unsigned alpha.
+
+Streamer mode: use the bottom-left Auto / On / Off control to mask private
+details in the Hub. Auto detects supported apps running, not actual recording.
+Choose On before sharing. Codex and browser login windows are not masked.
 
 Microsoft Edge WebView2 is required. See setup and verification details:
 https://github.com/mithilkatkoria/draey-codex-hub

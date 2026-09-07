@@ -11,5 +11,5 @@ export interface Installation { desktop: string | null; cli: string | null; exis
 export const defaultSettings: Settings = { desktopExe: null, cliExe: null, profileRoot: null, autoRefresh: true, refreshSeconds: 60, refreshOnFocus: true, showStale: true, reducedMotion: false, density: 'comfortable', minimizeToTray: true, startup: false, hideAfterLaunch: false };
 export const emptyStore: Store = { version: 1, profiles: [], projects: [], settings: defaultSettings, usageCache: {} };
 
-export interface WorkspaceSwitch { id: string; stage: 'waiting' | 'restarting' | 'switching'; message: string }
+export interface WorkspaceSwitch { id: string; stage: 'waiting' | 'restarting' | 'awaiting-quit' | 'switching'; message: string }
 export interface WorkspaceStatus { home: string; activeProfileId: string | null; pending: WorkspaceSwitch | null }

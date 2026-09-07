@@ -25,3 +25,6 @@ main{margin-left:var(--rail);position:relative;min-height:calc(100vh - var(--chr
 
 /* Keep account states and cached timestamps legible at desktop scale. */
 .plan{font-size:11px;color:#9ba2ba}.card-state .status{font-size:10px;letter-spacing:.4px}.reservation-tag,.availability-tag{font-size:10px}.allowance-heading,.model-allowances .allowance-heading{font-size:11px}.allowance-reset{font-size:10px}.reset-calendar{font-size:10px;color:#8994af}.launch-button{font-size:12px;min-height:38px}.sync-line{font-size:10px;color:#929cb7}.window-search{font-size:12px;width:350px}.model-allowances-heading{font-size:9px}.settings-nav,nav button{font-size:13px}.project-name strong,.project-empty strong{font-size:12px}.footnote{color:#7e89a3}
+
+.recovery-screen{margin-left:0;display:grid;place-items:center;padding:32px}.recovery-screen section{max-width:620px}.recovery-screen h1{font-size:26px}.recovery-screen p{margin:20px 0;line-height:1.7;color:var(--muted)}
+.window-brand .brand-mark{width:30px;height:34px;object-fit:contain;flex-shrink:0;pointer-events:none}

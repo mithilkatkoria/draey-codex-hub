@@ -1,5 +1,7 @@
 # Draey Codex Hub: Multi-account Codex manager for Windows
 
+<img src="src-tauri/icons/128x128.png" alt="Draey's transparent folded D icon" width="72" height="72">
+
 **Have more than one Codex account? See your real usage limits in one place and deliberately choose which account to use next.**
 
 Draey Codex Hub is a Windows Codex account manager and usage monitor for developers managing personal, work, or other accounts they are authorized to use. Compare remaining allowances, see reset times, and open Codex from one local dashboard.
@@ -40,15 +42,16 @@ The download is an unsigned x64 Windows test build, also tested on Windows ARM t
 - Displays the windows actually reported, including different Pro and additional-model layouts; missing values remain unknown.
 - Preserves Friend Priority and Reserved preferences. Account selection is deliberate, with no automatic rotation or Pro prioritization.
 - Offers project shortcuts, Ctrl+K commands, tray support, settings, and timestamped cached values.
+- Includes [streamer mode](docs/streamer-mode.md) with Auto, On, and Off. Mask identities, project names, paths, tooltips, forms, and diagnostic details without changing saved accounts or launch targets.
 - Uses the existing Codex workspace instead of opening an empty separate desktop profile.
 
 ## Account switching and local data
 
-Sign out inside Codex, then click a saved account in the Hub. The Hub detects sign-out, requests a normal Codex restart, and loads the saved login in the existing workspace. You can also choose the account first and follow the waiting notice, or quit Codex manually. If Codex asks about unfinished work or remains in the background, finish quitting from its menu. You can cancel while waiting; the Hub never force-kills Codex. This revised flow is still awaiting full real A/B/A Desktop acceptance.
+Sign out inside Codex, then click a saved account in the Hub. The Hub detects sign-out, requests a normal Codex restart, and loads the saved login in the existing workspace. You can also choose the account first and follow the waiting notice, or quit Codex manually. If Codex asks about unfinished work or remains in the background, finish quitting from its menu. The selected account stays queued for up to ten minutes, and other accounts can refresh during the wait. You can cancel while waiting; the Hub never force-kills Codex. This revised flow is still awaiting full real A/B/A Desktop acceptance.
 
 Projects, tasks, desktop data, and configuration stay in place. The Hub transfers only local `auth.json` credentials, retains a recovery backup, and serializes switching against its own authentication operations. Finish independent CLI work before switching too. File-based credentials are currently required; other credential-store configurations are preserved and rejected for switching.
 
-Account slots, settings, and sensitive authentication backups are created under `%LOCALAPPDATA%\dev.draey.codexhub`. The shared workspace is `%USERPROFILE%\.codex`. **Never upload either location, credentials, or authentication backups to GitHub.** Release packages contain no personal accounts or projects. Each user signs into their own accounts.
+Development builds now keep account slots, settings, and sensitive authentication backups under `%USERPROFILE%\.draey-codex-hub`. On first launch they recover the previous `%LOCALAPPDATA%\dev.draey.codexhub` store, including the copy Windows virtualized inside the Codex package. Original files are preserved. This prevents Explorer launches and launches from Codex from showing different profile lists. The shared workspace remains `%USERPROFILE%\.codex`. **Never upload these locations, credentials, or authentication backups to GitHub.** Release packages contain no personal accounts or projects. Each user signs into their own accounts.
 
 ## Build from source
 
@@ -73,7 +76,7 @@ Build a release executable and NSIS installer locally:
 
 ```powershell
 pnpm package
-# src-tauri/target/release/bundle/nsis/
+# src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/
 ```
 
 The initial alpha.1 download preceded its documentation commit. New release packages are built from their versioned source and include SHA-256 checksums. See each release for the exact tested scope.

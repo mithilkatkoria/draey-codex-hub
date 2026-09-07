@@ -1,9 +1,12 @@
 import { ArrowUpRight, RefreshCw, LockKeyhole, MoreHorizontal, ShieldCheck, Clock3, RotateCcw, ChevronDown, Zap } from 'lucide-react';
+import { usePrivacy } from './StreamerMode';
 import type { Profile, Snapshot, Settings, UsageWindow } from '../types';
 import { age, effectiveState } from '../services/refresh';
 import { presentWindows, resetDate, resetRemaining } from '../services/usagePresentation';
 
 export function ProfileCard({profile:p,snapshot,settings,now,active=false,busy,onLaunch,onRefresh,onEdit,onLogin}:{profile:Profile;snapshot?:Snapshot;settings:Settings;now:number;active?:boolean;busy?:string;onLaunch:()=>void;onRefresh:()=>void;onEdit:()=>void;onLogin:()=>void}) {
+  const privacy=usePrivacy();
+  const displayName=privacy.profileName(p);
   const state = effectiveState(snapshot,now,settings.refreshSeconds);
   const reserved = p.availability !== 'available';
   const live = state === 'live';
@@ -11,7 +14,7 @@ export function ProfileCard({profile:p,snapshot,settings,now,active=false,busy,o
   const visible = settings.showStale || live;
   const {core,additional} = presentWindows(p,visible ? snapshot?.windows ?? [] : []);
   const [hero,...secondary] = core;
-  const auth = state === 'auth-required' || p.connection === 'auth-required' && !snapshot?.fetchedAt;
+  const auth = state === 'auth-required' || p.connection === 'auth-required';
   const exhausted = live && core.some(w => w.remainingPercent === 0);
   const resets = visible ? snapshot?.resetCredits : undefined;
   const count = resets?.availableCount;
@@ -32,17 +35,17 @@ export function ProfileCard({profile:p,snapshot,settings,now,active=false,busy,o
   }
 
   return <article className={`profile-card accent-${p.accent} ${active?'is-current':''} ${reserved?'reserved':''} ${exhausted?'is-exhausted':''}`}>
-    <div className="card-top"><div className="identity"><div className="avatar">{p.name.slice(0,1)}</div><div><div className="identity-title"><h3>{p.name}</h3><span className="plan-chip">{plan === 'prolite' ? 'Pro' : plan}</span></div><span className="plan" title={p.accountEmail??undefined}>{p.accountEmail??'Codex account'}</span></div></div><button className="icon-button" aria-label={`Settings for ${p.name}`} onClick={onEdit}><MoreHorizontal size={19}/></button></div>
+    <div className="card-top"><div className="identity"><div className="avatar">{displayName.slice(0,1)}</div><div><div className="identity-title"><h3>{displayName}</h3><span className="plan-chip">{plan === 'prolite' ? 'Pro' : plan}</span></div><span className="plan" title={privacy.active?undefined:p.accountEmail??undefined}>{privacy.active?'Email hidden':p.accountEmail??'Codex account'}</span></div></div><button className="icon-button" aria-label={`Settings for ${displayName}`} onClick={onEdit}><MoreHorizontal size={19}/></button></div>
     <div className="card-state"><span className={`status status-${state}`}><i className={state==='refreshing'?'pulse':''}/>{state.replace('-',' ')}</span>{reserved?<span className="reservation-tag"><LockKeyhole size={11}/>{p.availability==='friend-priority'?'Friend priority':'Reserved'}</span>:<span className="availability-tag">{active?'Current workspace':auth?'Sign-in needed':exhausted?'Allowance reached':'Available'}</span>}</div>
     <div className="card-usage">
       {hero ? windowMeter(hero,true) : <div className={`usage-empty ${state==='refreshing'?'skeleton':''}`}><div className="empty-orbit"><RefreshCw size={22} className={state==='refreshing'?'spin':''}/></div><strong>{state==='refreshing'?'Checking allowances':auth?'Connect your account':'Usage unavailable'}</strong><p>{auth?'Sign in once to see real limits.':'Each account reports its own allowances.'}</p></div>}
       {secondary.length>0 && <div className="secondary-allowances">{secondary.map(w=>windowMeter(w))}</div>}
       {additional.length>0 && <div className="model-allowances"><div className="model-allowances-heading"><Zap size={12}/><span>{additional.every(w=>/spark/i.test(w.bucket)||/spark/i.test(w.id))?'Spark allowances':'Additional model allowances'}</span></div>{additional.map(w=><div key={w.id}>{!(/spark/i.test(w.bucket)||/spark/i.test(w.id))&&<div className="model-name">{w.bucket}</div>}{windowMeter(w)}</div>)}</div>}
     </div>
-    <details className="reset-bank"><summary><span className="reset-bank-icon"><RotateCcw size={15}/></span><span className="reset-bank-label">Banked resets<small>{count==null?'Not reported':`${count} available${cached?' · cached':''}`}</small></span><strong>{count??'N/A'}</strong><ChevronDown size={13} className="reset-bank-chevron"/></summary><div className="reset-bank-detail">{count==null?<p>Codex has not supplied a reset-credit balance for this account. This does not mean zero.</p>:<><p>These are saved usage-reset credits. Scheduled window resets above happen separately.</p>{banked.map((credit,i)=><div className="bank-credit" key={`${credit.title}-${i}`}><span>{credit.title||'Usage reset'}</span><small>{credit.expiresAt==null?'Expiry not reported':`Expires ${resetDate(credit.expiresAt)}`}</small></div>)}{nextExpiry!=null&&<p className="credit-expiry">Next expiry in {resetRemaining(nextExpiry,now)}</p>}</>}</div></details>
-    {snapshot?.message && <p className="card-error" title={snapshot.message}>{snapshot.message.replace(/^(AUTH_REQUIRED|OFFLINE): /,'')}</p>}
-    <div className="card-actions"><div className="sync-line"><span>{cached?'Last confirmed ':''}{snapshot?.fetchedAt?age(snapshot.fetchedAt,now):'Not synced'}</span><button className="icon-button" aria-label={`Refresh ${p.name}`} disabled={state==='refreshing'||!!busy} onClick={onRefresh}><RefreshCw size={13} className={state==='refreshing'?'spin':''}/></button></div>
-    <button className={`launch-button ${reserved?'subdued':''}`} onClick={auth?onLogin:onLaunch} disabled={!!busy}><span>{busy || (auth?'Connect account':reserved?'OPEN ANYWAY':active?'Open current workspace':'Open Codex')}</span>{busy?<RefreshCw size={15} className="spin"/>:<ArrowUpRight size={17}/>}</button>
+    <details className="reset-bank"><summary><span className="reset-bank-icon"><RotateCcw size={15}/></span><span className="reset-bank-label">Banked resets<small>{count==null?'Not reported':`${count} available${cached?' · cached':''}`}</small></span><strong>{count??'N/A'}</strong><ChevronDown size={13} className="reset-bank-chevron"/></summary><div className="reset-bank-detail">{count==null?<p>Codex has not supplied a reset-credit balance for this account. This does not mean zero.</p>:<><p>These are saved usage-reset credits. Scheduled window resets above happen separately.</p>{banked.map((credit,i)=><div className="bank-credit" key={`${credit.title}-${i}`}><span>{privacy.active?'Usage reset':credit.title||'Usage reset'}</span><small>{credit.expiresAt==null?'Expiry not reported':`Expires ${resetDate(credit.expiresAt)}`}</small></div>)}{nextExpiry!=null&&<p className="credit-expiry">Next expiry in {resetRemaining(nextExpiry,now)}</p>}</>}</div></details>
+    {snapshot?.message && <p className="card-error" title={privacy.active?undefined:snapshot.message}>{privacy.detail(snapshot.message.replace(/^(AUTH_REQUIRED|OFFLINE): /,''))}</p>}
+    <div className="card-actions"><div className="sync-line"><span>{cached?'Last confirmed ':''}{snapshot?.fetchedAt?age(snapshot.fetchedAt,now):'Not synced'}</span><button className="icon-button" aria-label={`Refresh ${displayName}`} disabled={state==='refreshing'||!!busy} onClick={onRefresh}><RefreshCw size={13} className={state==='refreshing'?'spin':''}/></button></div>
+    <button className={`launch-button ${reserved?'subdued':''}`} onClick={auth?onLogin:onLaunch} disabled={!!busy}><span>{privacy.text(busy) || (auth?'Connect account':reserved?'OPEN ANYWAY':active?'Open current workspace':'Open Codex')}</span>{busy?<RefreshCw size={15} className="spin"/>:<ArrowUpRight size={17}/>}</button>
     </div><div className="card-bottom"><span>{reserved?'Reserved · you can choose to open':'Last opened '+age(p.lastUsedAt,now)}</span><ShieldCheck size={12}/></div>
   </article>;
 }
