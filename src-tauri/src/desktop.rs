@@ -76,10 +76,9 @@ fn quit_label(label: &str) -> bool {
         unsafe{EnumWindows(Some(window),&mut search as *mut Search as LPARAM);}
         Ok(search.found.or_else(||search.visible.map(|(w,_)|(w,0))))
     }
-    pub fn request(exe:&Path,home:&Path)->Result<(),String> {
+    pub fn request(exe:&Path)->Result<(),String> {
         use windows_sys::Win32::UI::Input::KeyboardAndMouse::*;
         let (window,id)=find(exe)?.ok_or("Open Codex and choose File > Quit (Ctrl+Q). X can leave Codex in the background.")?;
-        if !crate::workspace::signed_out(home)? {return Err("Codex signed in again. No quit request was sent.".into());}
         if id!=0 {
             if unsafe{PostMessageW(window,WM_COMMAND,id as usize,0)}==0 {return Err("Windows could not request Codex to quit. Use File > Quit inside Codex.".into());}
         } else {
@@ -93,7 +92,6 @@ fn quit_label(label: &str) -> bool {
                 ShowWindowAsync(window,SW_RESTORE);
                 SetForegroundWindow(window);
                 if GetForegroundWindow()!=window {return Err("Bring Codex to the front and press Ctrl+Q to quit normally.".into());}
-                if !crate::workspace::signed_out(home)? {return Err("Codex signed in again. No quit shortcut was sent.".into());}
                 let key=|code,flags|INPUT{r#type:INPUT_KEYBOARD,Anonymous:INPUT_0{ki:KEYBDINPUT{wVk:code,wScan:0,dwFlags:flags,time:0,dwExtraInfo:0}}};
                 let keys=[key(VK_CONTROL,0),key(0x51,0),key(0x51,KEYEVENTF_KEYUP),key(VK_CONTROL,KEYEVENTF_KEYUP)];
                 if SendInput(keys.len() as u32,keys.as_ptr(),std::mem::size_of::<INPUT>() as i32)!=keys.len() as u32 {
@@ -112,10 +110,9 @@ pub fn can_request_quit(exe:&Path)->Result<bool,String> {
     #[cfg(not(windows))] {let _=exe;Ok(false)}
 }
 
-pub fn request_signed_out_close(exe: &Path, home: &Path) -> Result<(), String> {
-    if !crate::workspace::signed_out(home)? { return Err("Codex is signed in again. No quit request was sent.".into()); }
+pub fn request_normal_quit(exe: &Path) -> Result<(), String> {
     if main_processes(exe)?.is_empty() {return Ok(());}
-    #[cfg(windows)] {menu::request(exe,home)}
+    #[cfg(windows)] {menu::request(exe)}
     #[cfg(not(windows))] {Err("Quit Codex manually, then choose the saved account.".into())}
 }
 

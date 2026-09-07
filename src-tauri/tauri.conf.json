@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Draey Codex Hub",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "identifier": "dev.draey.codexhub",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -17,7 +17,7 @@
         "height": 850,
         "minWidth": 800,
         "minHeight": 600,
-        "backgroundColor": "#0d0e14",
+        "backgroundColor": "#141518",
         "theme": "Dark",
         "decorations": false
       }
@@ -31,7 +31,7 @@
     "targets": [
       "nsis"
     ],
-    "shortDescription": "Every Codex profile. One command centre.",
+    "shortDescription": "Saved Codex accounts, live usage, and project shortcuts.",
     "category": "DeveloperTool",
     "windows": {
       "nsis": {

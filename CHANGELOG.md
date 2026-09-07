@@ -7,6 +7,27 @@ All published releases receive an immutable Git tag and an entry here. Unrelease
 ### Pending
 - Record the next changes here.
 
+## [0.1.0-alpha.3] - 2026-09-07
+
+### Changed
+- Redesigned the app around adaptive vertical account cards, SVG usage rings, segmented allowance bars, distinct account symbols, a navy palette, and responsive settings and dialogs.
+- Added a brief grayscale D-logo entrance and fade-out while accounts load underneath. System and app reduced-motion settings skip it.
+- Added an activity summary from confirmed usage and launch timestamps. Reduced periodic UI clock updates from every second to every 15 seconds. No animation library or video assets are bundled.
+- Balance one, three, four, or more accounts without a fixed account limit. Keep all saved accounts intact.
+- Bound concurrent usage requests to three, including tray refreshes, and suspend display polling while hidden.
+- Add a GitHub releases button and manual update instructions in Settings.
+- Put extra model windows and banked-reset details behind expandable controls while keeping primary allowances visible.
+- Switching now verifies the selected login and requests normal Quit without asking users to sign out. Sign-out can revoke saved credentials.
+
+### Fixed
+- Retry rejected usage once through Codex managed-token refresh before asking for another browser login.
+- Connect account rechecks an existing saved login before starting Google or OpenAI sign-in.
+- Network errors mentioning authentication no longer automatically mark an account disconnected.
+- Keep streamer-mode controls within the minimum supported window height.
+- Correct local profile verification to use the stable user-folder store and the active account's current workspace credentials.
+
+The Windows installer provides a Start menu shortcut. Previously revoked logins need one reconnect. Full real A/B/A Desktop acceptance remains pending.
+
 ## [0.1.0-alpha.2] - 2026-09-06
 
 ### Fixed
@@ -44,7 +65,9 @@ The signed-out restart flow still requires real Desktop acceptance; no productio
 - Unsigned test executable; no signed installer.
 - Initial download predates the documentation commit tagged with this release; it is not claimed to be a reproducible artifact of that tag.
 
-[Unreleased]: https://github.com/mithilkatkoria/draey-codex-hub/compare/v0.1.0-alpha.2...main
+[Unreleased]: https://github.com/mithilkatkoria/draey-codex-hub/compare/v0.1.0-alpha.3...main
 [0.1.0-alpha.1]: https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.1
 
 [0.1.0-alpha.2]: https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.2
+
+[0.1.0-alpha.3]: https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.3

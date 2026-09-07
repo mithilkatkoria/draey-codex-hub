@@ -29,7 +29,19 @@ pub fn detect(s: &Settings) -> Installation {
  if cli.is_none() {if let Some(local)=dirs::data_local_dir(){if let Ok(entries)=std::fs::read_dir(local.join("OpenAI/Codex/bin")){let mut versions:Vec<_>=entries.flatten().collect();versions.sort_by_key(|e|std::cmp::Reverse(e.metadata().and_then(|m|m.modified()).ok()));cli=versions.into_iter().map(|e|e.path().join("codex.exe")).find(|p|executable(p));}}}
  if cli.is_none() {cli=desktop.as_ref().and_then(|p|p.parent()).map(|p|p.join("resources/codex.exe")).filter(|p|executable(p));}
  let existing_home=dirs::home_dir().map(|p|p.join(".codex")).filter(|p|p.is_dir());
- Installation {desktop,cli,existing_home,isolation:"Accounts share your existing Codex workspace. Sign out in Codex to load a saved login after a normal restart; projects and desktop data stay in place.".into()}
+ Installation {desktop,cli,existing_home,isolation:"Accounts share your existing Codex workspace. Switching uses a normal quit and restart, preserving saved logins, projects, and desktop data.".into()}
+}
+/// Keep remote response details out of the UI. A network failure mentioning an
+/// authentication endpoint must not turn a saved account into a disconnected one.
+fn classify_error(error:&Value)->String {
+ let message=error.get("message").and_then(Value::as_str).unwrap_or("").to_lowercase();
+ if ["401","unauthorized","refresh_token_invalidated","refresh_token_reused","refresh_token_expired"].iter().any(|s|message.contains(s)) {
+  "AUTH_REQUIRED: Codex rejected the saved login. Refresh or reconnect this account.".into()
+ } else if ["network","connect","timeout","timed out","dns"].iter().any(|s|message.contains(s)) {
+  "OFFLINE: Codex could not reach the usage service. Your saved login has been kept.".into()
+ } else if ["not authenticated","authentication required","not logged in","sign in","sign-in"].iter().any(|s|message.contains(s)) {
+  "AUTH_REQUIRED: Reconnect this profile through OpenAI sign-in.".into()
+ } else {"Codex could not complete the request. Retry or run diagnostics.".into()}
 }
 pub struct Rpc {child:Child,input:ChildStdin,lines:Lines<BufReader<ChildStdout>>,next_id:u64,notifications:std::collections::VecDeque<Value>}
 pub fn identity_key(account:&Value)->Result<String,String>{use sha2::{Digest,Sha256};let email=account.get("email").and_then(Value::as_str).filter(|s|!s.is_empty()).ok_or("Codex returned no account identity. Reconnect to validate this profile.")?;let discriminator=account.get("accountId").and_then(Value::as_str).unwrap_or("");Ok(format!("{:x}",Sha256::digest(format!("{}:{discriminator}",email.to_lowercase()).as_bytes())))}
@@ -47,11 +59,22 @@ impl Rpc {
  async fn raw_next(&mut self)->Result<Value,String> {loop {let line=self.lines.next_line().await.map_err(|_|"Cannot read Codex response")?.ok_or("Codex app-server exited")?;if line.len()>4*1024*1024 {return Err("Codex response exceeded size limit".into())} if let Ok(value)=serde_json::from_str(&line) {return Ok(value)} }}
  pub async fn call(&mut self,method:&str,params:Value)->Result<Value,String> {
   self.next_id+=1;let id=self.next_id;self.send(json!({"id":id,"method":method,"params":params})).await?;
-  tokio::time::timeout(Duration::from_secs(25),async {loop {let v=self.raw_next().await?;if v.get("id").and_then(Value::as_u64)==Some(id) {if let Some(error)=v.get("error") {let message=error.get("message").and_then(Value::as_str).unwrap_or("").to_lowercase();return Err(if ["401","unauthorized","auth","login","sign in"].iter().any(|s|message.contains(s)) {"AUTH_REQUIRED: Reconnect this profile through OpenAI sign-in.".into()} else if ["network","connect","timeout","dns"].iter().any(|s|message.contains(s)) {"OFFLINE: Codex could not reach the usage service.".into()} else {"Codex could not complete the request. Retry or run diagnostics.".into()});}return v.get("result").cloned().ok_or("Malformed Codex response".into());} if v.get("method").is_some() && self.notifications.len()<256 {self.notifications.push_back(v);} }}).await.map_err(|_|"OFFLINE: Codex did not respond within 25 seconds.".to_string())?
+  tokio::time::timeout(Duration::from_secs(25),async {loop {let v=self.raw_next().await?;if v.get("id").and_then(Value::as_u64)==Some(id) {if let Some(error)=v.get("error") {return Err(classify_error(error));}return v.get("result").cloned().ok_or("Malformed Codex response".into());} if v.get("method").is_some() && self.notifications.len()<256 {self.notifications.push_back(v);} }}).await.map_err(|_|"OFFLINE: Codex did not respond within 25 seconds.".to_string())?
+ }
+ /// Usage reads can return 401 for an expired access token without refreshing
+ /// managed credentials. Ask Codex to refresh once before requiring browser login.
+ pub async fn account_with_limits(&mut self)->Result<(Value,Value),String> {
+  let account=self.account().await?;
+  let result=self.call("account/rateLimits/read",json!({})).await;
+  if !result.as_ref().is_err_and(|e|e.starts_with("AUTH_REQUIRED:")) {return result.map(|limits|(account,limits));}
+  let renewed=self.verify_account().await?;
+  if identity_key(&account)?!=identity_key(&renewed)? {return Err("AUTH_REQUIRED: The account changed during token refresh. Reconnect the intended account.".into());}
+  let limits=self.call("account/rateLimits/read",json!({})).await?;
+  Ok((renewed,limits))
  }
  pub async fn account(&mut self)->Result<Value,String> {self.read_account(false).await}
  pub async fn verify_account(&mut self)->Result<Value,String> {self.read_account(true).await}
- async fn read_account(&mut self,refresh:bool)->Result<Value,String> {let a=self.call("account/read",json!({"refreshToken":refresh})).await?;let account=a.get("account").filter(|v|!v.is_null()).ok_or("AUTH_REQUIRED: Sign in to connect this profile.")?;if account.get("type").and_then(Value::as_str)!=Some("chatgpt") {return Err("Subscription usage requires a ChatGPT account, rather than API-key authentication.".into())} Ok(account.clone())}
+ async fn read_account(&mut self,refresh:bool)->Result<Value,String> {let a=self.call("account/read",json!({"refreshToken":refresh})).await?;let account=a.get("account").filter(|v|!v.is_null()).ok_or(if refresh {"AUTH_REQUIRED: Codex could not renew this saved login. It may have expired or been revoked. Reconnect once, then switch using Quit rather than Sign out."} else {"AUTH_REQUIRED: Sign in to connect this profile."})?;if account.get("type").and_then(Value::as_str)!=Some("chatgpt") {return Err("Subscription usage requires a ChatGPT account, rather than API-key authentication.".into())} Ok(account.clone())}
  pub async fn stop(&mut self) {let _=self.child.kill().await;let _=self.child.wait().await;}
 }
 pub fn desktop_running() -> bool {
@@ -77,6 +100,14 @@ pub async fn launch(exe:&Path,home:&Path,project:Option<&Path>)->Result<String,S
 }
 #[cfg(test)] mod tests {
  use super::*;
+ #[test] fn authentication_endpoint_network_errors_keep_saved_accounts_connected() {
+  let network=classify_error(&json!({"message":"authentication endpoint connection timed out"}));
+  assert!(network.starts_with("OFFLINE:"));
+  assert!(!network.contains("endpoint"));
+  assert!(classify_error(&json!({"message":"usage request returned 401 Unauthorized"})).starts_with("AUTH_REQUIRED:"));
+  assert!(classify_error(&json!({"message":"refresh_token_invalidated"})).starts_with("AUTH_REQUIRED:"));
+  assert!(!classify_error(&json!({"message":"author unavailable"})).starts_with("AUTH_REQUIRED:"));
+ }
  #[test] fn launch_uses_existing_workspace_without_a_separate_desktop_profile() {
   let home=Path::new("C:/Users/person/.codex");
   let args=launch_args(Some(Path::new("C:/A project/$value")));

@@ -1,0 +1,50 @@
+/* Portrait cards adapt to available space, with no saved-account limit. */
+.accounts-section { container: accounts / inline-size; }
+.profile-grid { grid-template-columns: repeat(auto-fit, minmax(235px, 1fr)); gap: 16px; align-items: stretch; }
+.profile-grid:has(> .account-tile:only-child) { grid-template-columns: minmax(0, 380px); }
+.profile-card.account-tile { padding:18px 18px 12px; background:radial-gradient(ellipse at 75% 0%,color-mix(in srgb,var(--profile-accent) 9%,transparent),transparent 50%),#11171c; border-color:#293137; border-radius:11px; min-width:0; transition:border-color .2s,transform .2s; }
+.profile-card.account-tile:hover { border-color:color-mix(in srgb,var(--profile-accent) 45%,#293137); transform:translateY(-2px); }
+.portrait-top { display:flex;align-items:center;justify-content:space-between;gap:8px; }
+.portrait-top .plan-chip { background:#ffffff06;border-color:#ffffff15;color:#c1c8cf;font-size:10px;text-transform:capitalize; }
+.availability-chip { color:#83c9b1;border:1px solid #37785f;border-radius:20px;font-size:9px;padding:4px 9px; }
+.availability-reserved { color:#e7bd87;border-color:#896139; }
+.portrait-art { height:126px;display:grid;place-items:center;position:relative;color:var(--profile-accent);overflow:hidden; }
+.portrait-art>svg { z-index:1;transform:rotate(-10deg);filter:drop-shadow(0 5px 8px #0009); }
+.art-halo { width:102px;height:102px;position:absolute;border:1px solid color-mix(in srgb,var(--profile-accent) 19%,transparent);border-radius:30%;transform:rotate(30deg);background:linear-gradient(140deg,color-mix(in srgb,var(--profile-accent) 10%,transparent),transparent 70%); }
+.tile-heading .account-symbol,.tile-heading .plan-chip,.additional-hint { display:none; }
+.account-tile .identity-title h3 { font-size:21px;font-weight:550; }
+.account-tile .plan { font-size:11px; }
+.account-tile .card-state { flex-wrap:wrap;gap:7px;font-size:9px;min-height:16px; }
+.account-tile .priority-strip { margin:0 0 14px;border:1px solid #59472f;padding:10px;border-radius:6px;font-size:9px;letter-spacing:.2px;text-transform:none; }
+.priority-strip>span { display:none; }
+.account-tile .tile-quotas { display:grid;grid-template-columns:minmax(0,1fr);gap:19px;min-height:151px;padding:21px 0;margin-top:15px;border-top-color:#ffffff0a;flex:0; }
+.account-tile .quota-with-ring { gap:13px; }
+.account-tile .quota-ring { width:57px;height:57px;flex-basis:57px; }
+.account-tile .quota-ring strong { font-size:15px; }
+.account-tile .quota-heading { font-size:12px; }
+.account-tile .quota-heading strong { font-size:27px; }
+.account-tile .quota-reset { font-size:10px; }
+.account-tile .quota-reset svg { display:none; }
+.account-tile .quota-segments { height:4px; }
+.account-tile .quota-caption { font-size:9px; }
+.account-tile .tile-extra-grid { grid-template-columns:minmax(0,1fr); }
+.account-tile .tile-footer { flex-direction:column-reverse;align-items:stretch;gap:6px; }
+.account-tile .tile-footer .launch-button { width:100%;max-width:none;justify-content:space-between;min-height:40px;background:#ffffff07;border-color:#ffffff13;color:#d9e0e6; }
+.account-tile.reserved .tile-footer .launch-button { background:linear-gradient(115deg,#f3ddc1,#c5cddd);color:#1b1d21; }
+.account-tile .tile-sync { font-size:9px; }
+.account-tile .tile-bank { margin-top:2px; }
+.account-tile .tile-bank summary { justify-content:flex-start; }
+.account-tile .tile-bank summary>svg { margin-left:auto; }
+.account-tile.is-current { border-color:#536782; }
+.account-tile .tile-error { padding:9px; }
+.account-tile .tile-error p { font-size:10px; }
+.activity-items { grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); }
+.main-content { max-width:1800px; }
+.page-heading h1 { font-size:clamp(27px,2.4vw,36px);font-weight:550; }
+.density-compact .portrait-art { height:88px; }
+.density-compact .portrait-art>svg { width:60px;height:60px; }
+.density-compact .account-tile .tile-quotas { padding:14px 0;min-height:130px; }
+@container accounts (max-width:525px) { .profile-grid { grid-template-columns:minmax(0,1fr); }.portrait-art { height:100px; } }
+@container accounts (min-width:1000px) { .profile-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }.profile-grid:has(> .account-tile:nth-child(2):last-child) { grid-template-columns:repeat(2,minmax(0,1fr));max-width:780px; }.profile-grid:has(> .account-tile:nth-child(3):last-child) { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (prefers-reduced-motion:reduce) { .profile-card.account-tile:hover { transform:none; } }
+.reduced-motion .profile-card.account-tile:hover { transform:none; }

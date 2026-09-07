@@ -15,6 +15,7 @@ it('renders profiles before startup requests finish and refreshes every account 
   if(command==='detect_codex')return Promise.resolve({desktop:null,cli:null});
   if(command==='refresh_usage'){const id=args!.id;requested.push(id);return new Promise<Snapshot>(r=>resolvers[id]=r);}
  });
- const {result}=renderHook(()=>useHub());await waitFor(()=>expect(result.current.loaded).toBe(true));expect(result.current.store.profiles).toHaveLength(5);expect(requested).toEqual(['a','b','c','d','e']);expect(result.current.store.usageCache.b.state).toBe('refreshing');
- await act(async()=>resolvers.a({windows:[],state:'live',fetchedAt:new Date().toISOString(),source:'test fixture',message:null}));expect(result.current.store.usageCache.a.state).toBe('live');expect(result.current.store.usageCache.b.state).toBe('refreshing');
+ const {result}=renderHook(()=>useHub());await waitFor(()=>expect(result.current.loaded).toBe(true));expect(result.current.store.profiles).toHaveLength(5);expect(requested).toEqual(['a','b','c']);expect(result.current.store.usageCache.b.state).toBe('refreshing');
+ await act(async()=>resolvers.a({windows:[],state:'live',fetchedAt:new Date().toISOString(),source:'test fixture',message:null}));expect(requested).toEqual(['a','b','c','d']);expect(result.current.store.usageCache.a.state).toBe('live');expect(result.current.store.usageCache.b.state).toBe('refreshing');
+ await act(async()=>resolvers.c({windows:[],state:'live',fetchedAt:new Date().toISOString(),source:'test fixture',message:null}));expect(requested).toEqual(['a','b','c','d','e']);expect(result.current.store.usageCache.b.state).toBe('refreshing');
 });

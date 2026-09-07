@@ -13,7 +13,7 @@ Draey Codex Hub is a Windows Codex account manager and usage monitor for develop
 | Your situation | How the Hub helps |
 | --- | --- |
 | You keep checking limits across several accounts | Startup refresh requests each account's real limits independently. |
-| Your accounts have different plans and allowance windows | Cards display the windows Codex reports, including Pro and additional-model allowances. |
+| Your accounts have different plans and allowance windows | Account cards display the windows Codex reports, including Pro and additional-model allowances. |
 | You want to know when an allowance resets | Remaining usage and reset times appear together, with timestamps for cached data. |
 | An account is reserved or has Friend Priority | Keep the preference visible and make an explicit choice before opening it. |
 | You want your familiar projects and tasks | The launcher targets the existing Codex workspace; cross-account handoff remains under acceptance testing. |
@@ -25,16 +25,18 @@ This is an account-management tool, not a way to increase allowances or bypass a
 
 ## Download for Windows
 
-**[Download the published alpha](https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.1)**
+**[Download v0.1.0-alpha.3 for Windows](https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.3)**
 
-The published download is v0.1.0-alpha.1. The newer app changes on `main` are still in development and are not included in that download.
-
-1. Download `Draey-Codex-Hub-Windows.zip` from the release's **Assets** section. GitHub's automatic **Source code** downloads do not contain the app.
-2. Extract the ZIP and double-click **Draey Codex Hub.exe**. A standalone `.exe` is also attached to the release.
+1. Download **Draey-Codex-Hub-setup.exe** from the release's Assets section and run it. This creates the Start menu shortcut.
+2. Open **Draey Codex Hub** from Windows Search. For a portable copy, download the ZIP, extract it, and open **Draey Codex Hub.exe** instead.
 3. Install [Codex Desktop](https://developers.openai.com/codex/app/) and [Codex CLI](https://developers.openai.com/codex/cli/) separately; open Codex normally once.
-4. Add your own accounts in the Hub and complete OpenAI sign-in for each. If detection fails, choose the Desktop and CLI executables in Settings.
+4. Add your own accounts and complete OpenAI sign-in for each. There is no fixed account limit. Three, four, and larger collections adapt to the available window space. No personal accounts are included.
 
-The download is an unsigned x64 Windows test build, also tested on Windows ARM through x64 emulation. It needs [Microsoft Edge WebView2](https://developer.microsoft.com/microsoft-edge/webview2/). If Windows reports a missing Visual C++ runtime DLL, install the [Microsoft x64 Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe). Node.js and Rust are not required to run the download. An installer and signed releases are future work.
+GitHub's automatic **Source code** downloads do not contain the app. Use the attached installer, EXE, or Windows ZIP.
+
+The download is an unsigned x64 Windows test build, also tested on Windows ARM through x64 emulation. It needs [Microsoft Edge WebView2](https://developer.microsoft.com/microsoft-edge/webview2/). If Windows reports a missing Visual C++ runtime DLL, install the [Microsoft x64 Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe). Node.js and Rust are not required to run the download. The NSIS installer creates a Start menu shortcut. Signed releases remain future work.
+
+To appear in Windows Search, use the installer rather than just running a portable executable. Search for **Draey Codex Hub** after installation. Installing an update preserves the separate user-folder account store.
 
 ## What it does
 
@@ -45,13 +47,21 @@ The download is an unsigned x64 Windows test build, also tested on Windows ARM t
 - Includes [streamer mode](docs/streamer-mode.md) with Auto, On, and Off. Mask identities, project names, paths, tooltips, forms, and diagnostic details without changing saved accounts or launch targets.
 - Uses the existing Codex workspace instead of opening an empty separate desktop profile.
 
+## Updates and resource use
+
+Open **Settings > App updates > View releases on GitHub**. Install the newer setup over your existing installation, or close the portable app and replace its EXE. Your accounts and preferences stay in a separate user folder. This release does not automatically download or install updates. A signed updater and update feed would be needed for automatic installation; see [Tauri updater documentation](https://v2.tauri.app/plugin/updater/).
+
+The Hub uses Windows WebView2 rather than bundling a browser. Its UI uses CSS and SVG, including a short reduced-motion-aware startup animation. Usage requests are capped at three simultaneously, with no limit on saved accounts. Display polling pauses while hidden. WebView2 and temporary Codex app-server processes still consume memory; a universal under-1% RAM promise would be inaccurate.
+
 ## Account switching and local data
 
-Sign out inside Codex, then click a saved account in the Hub. The Hub detects sign-out, requests a normal Codex restart, and loads the saved login in the existing workspace. You can also choose the account first and follow the waiting notice, or quit Codex manually. If Codex asks about unfinished work or remains in the background, finish quitting from its menu. The selected account stays queued for up to ten minutes, and other accounts can refresh during the wait. You can cancel while waiting; the Hub never force-kills Codex. This revised flow is still awaiting full real A/B/A Desktop acceptance.
+Choose a saved account in the Hub. The Hub verifies it, requests a normal Codex quit, and opens the same workspace with that login after Codex exits. Save your work and respond to any quit prompt. If needed, use **File > Quit (Ctrl+Q)**. Do not sign out to switch: sign-out can revoke the login the Hub saved. The selected account stays queued for up to ten minutes, with cancellation and independent refresh available. The Hub never force-kills Codex. Full real A/B/A Desktop acceptance remains pending.
+
+Your account entries and credentials are saved locally between launches. If a usage request rejects an expired access token, the Hub asks Codex to renew the saved login once before requiring browser sign-in. A token already revoked by OpenAI cannot be repaired locally; reconnect that account once. A failed network request does not erase an account or its saved login.
 
 Projects, tasks, desktop data, and configuration stay in place. The Hub transfers only local `auth.json` credentials, retains a recovery backup, and serializes switching against its own authentication operations. Finish independent CLI work before switching too. File-based credentials are currently required; other credential-store configurations are preserved and rejected for switching.
 
-Development builds now keep account slots, settings, and sensitive authentication backups under `%USERPROFILE%\.draey-codex-hub`. On first launch they recover the previous `%LOCALAPPDATA%\dev.draey.codexhub` store, including the copy Windows virtualized inside the Codex package. Original files are preserved. This prevents Explorer launches and launches from Codex from showing different profile lists. The shared workspace remains `%USERPROFILE%\.codex`. **Never upload these locations, credentials, or authentication backups to GitHub.** Release packages contain no personal accounts or projects. Each user signs into their own accounts.
+The app keeps account slots, settings, and sensitive authentication backups under `%USERPROFILE%\.draey-codex-hub`. On first launch they recover the previous `%LOCALAPPDATA%\dev.draey.codexhub` store, including the copy Windows virtualized inside the Codex package. Original files are preserved. This prevents Explorer launches and launches from Codex from showing different profile lists. The shared workspace remains `%USERPROFILE%\.codex`. **Never upload these locations, credentials, or authentication backups to GitHub.** Release packages contain no personal accounts or projects. Each user signs into their own accounts.
 
 ## Build from source
 
@@ -132,3 +142,7 @@ Copyright © 2026 Mithil Katkoria. See [LICENSE](LICENSE) for code permissions a
 ## Versioning
 
 The public download is **v0.1.0-alpha.1**. Source development is preparing **v0.1.0-alpha.2**; it has not been released as v1.0. Future releases use `MAJOR.MINOR.PATCH`: fixes such as `1.0.1`, smaller compatible features such as `1.1.0`, and major/breaking changes such as `2.0.0`. Every commit is tracked in Git; every published release gets its own tag and changelog entry. See [RELEASING.md](RELEASING.md).
+
+![Vertical account cards in a development preview](docs/images/accounts-preview.png)
+
+The preview above uses clearly labelled simulated data. The Windows production app requests real Codex limits and has no simulated fallback.

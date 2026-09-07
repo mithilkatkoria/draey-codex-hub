@@ -13,7 +13,7 @@ export function WorkspaceNotice({workspace,profiles,onCancel}:{workspace?:Worksp
  const selected=profiles.find(p=>p.id===pending.id);
  return <section ref={notice} tabIndex={-1} className="workspace-notice switch-pending" role="status">
   <div className="workspace-notice-icon">{needsQuit?<PauseCircle size={19}/>:<RefreshCw size={19} className="spin"/>}</div>
-  <div><strong>{pending.stage==='waiting'?'Sign out in Codex to switch':needsQuit?'Finish quitting Codex':pending.stage==='restarting'?'Loading your saved account':'Preparing your workspace'}{needsQuit&&selected?` · ${privacy.profileName(selected)} is queued`:''}</strong>
+  <div><strong>{pending.stage==='waiting'?'Quit Codex to switch':needsQuit?'Finish quitting Codex':pending.stage==='restarting'?'Loading your saved account':'Preparing your workspace'}{needsQuit&&selected?` · ${privacy.profileName(selected)} is queued`:''}</strong>
   <p>{privacy.text(pending.message)}</p></div>
   {pending.stage!=='switching'&&<button className="secondary" onClick={onCancel}><X size={14}/> Cancel switch</button>}
  </section>;

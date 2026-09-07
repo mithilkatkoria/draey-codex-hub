@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { emptyStore, type Installation, type Snapshot, type Store, type Profile, type WorkspaceStatus, type WorkspaceSwitch } from '../types';
 import { native, onNative } from '../services/native';
 import { RefreshCoordinator } from '../services/refresh';
+import { visiblePolling } from '../services/visiblePolling';
 export function useHub() {
  const [store,setStore]=useState<Store>(structuredClone(emptyStore));
  const [installation,setInstallation]=useState<Installation>();
@@ -23,9 +24,9 @@ export function useHub() {
   void refreshWorkspace();
   void native<Store>('load_state').then(s=>{if(cancelled)return;for(const v of Object.values(s.usageCache))v.state='stale';setStore(s);ref.current=s;setLoaded(true);void coordinator.current!.all(s.profiles);}).catch(e=>{if(!cancelled){setError(String(e));setLoadError(String(e));setLoaded(true);}});
   void native<Installation>('detect_codex').then(i=>{if(!cancelled)setInstallation(i);}).catch(()=>{});
-  const tick=window.setInterval(()=>setNow(Date.now()),1000);
-  const workspaceTick=window.setInterval(()=>{void refreshWorkspace();},3000);
-  return()=>{cancelled=true;disposers.forEach(f=>f());clearInterval(tick);clearInterval(workspaceTick);};
+  const stopClock=visiblePolling(()=>setNow(Date.now()),15000);
+  const stopWorkspace=visiblePolling(refreshWorkspace,15000);
+  return()=>{cancelled=true;disposers.forEach(f=>f());stopClock();stopWorkspace();};
  },[]);
  useEffect(()=>{if(!loaded)return;let last=Date.now();const run=()=>{last=Date.now();void coordinator.current!.all(ref.current.profiles);};const focus=()=>{if(ref.current.settings.refreshOnFocus&&Date.now()-last>=15000)run();};const timer=setInterval(()=>{if(ref.current.settings.autoRefresh&&document.visibilityState==='visible')run();},store.settings.refreshSeconds*1000);window.addEventListener('focus',focus);return()=>{clearInterval(timer);window.removeEventListener('focus',focus);};},[loaded,store.settings.refreshSeconds]);
  async function launch(id:string,projectId:string|null=null){setError('');setBusy(s=>({...s,[id]:'Preparing profile…'}));try{const message=await native<string>('launch_profile',{id,projectId});await reload();setBusy(s=>({...s,[id]:message}));setTimeout(()=>{setBusy(s=>({...s,[id]:''}));void coordinator.current!.refresh(id);},1800);}catch(e){if(!String(e).startsWith('Account switch cancelled'))setError(String(e));setBusy(s=>({...s,[id]:''}));}finally{void refreshWorkspace();}}
