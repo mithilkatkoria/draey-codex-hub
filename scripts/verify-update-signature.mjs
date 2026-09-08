@@ -1,0 +1,18 @@
+import {readFileSync} from 'node:fs';
+import {createHash,createPublicKey,verify} from 'node:crypto';
+const file=process.argv[2];if(!file)throw Error('Pass a signed installer path');
+const config=JSON.parse(readFileSync('src-tauri/tauri.conf.json','utf8'));
+const keyText=Buffer.from(config.plugins.updater.pubkey,'base64').toString('utf8').trim().split(/\r?\n/);
+const publicBytes=Buffer.from(keyText[1],'base64');
+const key=createPublicKey({key:Buffer.concat([Buffer.from('302a300506032b6570032100','hex'),publicBytes.subarray(10)]),format:'der',type:'spki'});
+const sigText=Buffer.from(readFileSync(file+'.sig','utf8').trim(),'base64').toString('utf8').trim().split(/\r?\n/);
+const signature=Buffer.from(sigText[1],'base64');
+if(!signature.subarray(2,10).equals(publicBytes.subarray(2,10)))throw Error('Wrong signing key');
+if(signature.subarray(0,2).toString()!=='ED')throw Error('Unexpected signing algorithm');
+const payload=readFileSync(file),digest=createHash('blake2b512').update(payload).digest();
+if(!verify(null,digest,key,signature.subarray(10)))throw Error('Invalid installer signature');
+const comment=sigText[2].replace(/^trusted comment: /,'');
+if(!verify(null,Buffer.concat([signature.subarray(10),Buffer.from(comment)]),key,Buffer.from(sigText[3],'base64')))throw Error('Invalid trusted comment');
+payload[Math.floor(payload.length/2)]^=1;
+if(verify(null,createHash('blake2b512').update(payload).digest(),key,signature.subarray(10)))throw Error('Tampered installer was accepted');
+console.log('Installer signature and trusted comment verified. Modified installer correctly rejected.');

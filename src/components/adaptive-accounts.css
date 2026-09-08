@@ -48,3 +48,22 @@
 @container accounts (min-width:1000px) { .profile-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }.profile-grid:has(> .account-tile:nth-child(2):last-child) { grid-template-columns:repeat(2,minmax(0,1fr));max-width:780px; }.profile-grid:has(> .account-tile:nth-child(3):last-child) { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media (prefers-reduced-motion:reduce) { .profile-card.account-tile:hover { transform:none; } }
 .reduced-motion .profile-card.account-tile:hover { transform:none; }
+/* Sculpted vector artwork and explicit allowance details. */
+.portrait-art { height:154px; }
+.portrait-art>svg.account-sculpture { width:180px;height:140px;transform:none;filter:none; }
+.art-halo { width:145px;height:145px;border-radius:42% 58% 67% 33%;border-color:#ffffff08;background:linear-gradient(140deg,color-mix(in srgb,var(--profile-accent) 7%,transparent),transparent 65%);transform:rotate(-23deg); }
+.account-tile .quota-ring { width:66px;height:66px;flex-basis:66px; }
+.account-tile .quota-ring strong { font-size:17px; }
+.account-tile .quota-detail { font-size:10px;color:#bcc9d8;line-height:1.7;display:flex;flex-wrap:wrap;gap:0 8px;margin:5px 0 1px; }
+.quota-detail>span { color:#7f93a9; }
+.quota-date { display:block;font-size:9px;color:#8296ae;margin-top:2px;line-height:1.5; }
+.account-tile .tile-quotas { gap:21px;min-height:193px; }
+.account-tile .quota-caption { color:#a9b9cc; }
+.account-tile .quota-segments { margin:7px 0; }
+.account-tile .identity-title h3 { font-size:22px;letter-spacing:-.5px; }
+.launch-intro { animation:intro-depart .6s ease 2.55s both; }
+.intro-emblem { animation:intro-arrive 1.25s cubic-bezier(.2,.7,.2,1) both; }
+.intro-emblem img { width:128px;height:128px; }
+.density-compact .portrait-art>svg.account-sculpture { width:140px;height:108px; }
+@container accounts (max-width:525px) { .account-tile .quota-ring { width:60px;height:60px;flex-basis:60px; } }
+.update-banner{display:flex;align-items:center;justify-content:space-between;gap:20px;border:1px solid #4f607f;border-radius:9px;background:#1b2635;padding:16px 20px;margin-bottom:22px}.update-banner h2{font-size:14px;margin-bottom:5px}.update-banner p{font-size:12px}.update-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;flex-shrink:0}.update-banner .update-actions{margin-top:0}.update-notes{white-space:pre-wrap;font-size:12px;line-height:1.7;margin:10px 0}.app-updates details{font-size:12px;margin-top:12px}@media(max-width:900px){.update-banner{align-items:flex-start;flex-direction:column}}

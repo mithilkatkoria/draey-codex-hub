@@ -18,3 +18,7 @@ auth-backups/
 *.sqlite*
 *.db
 *.log
+*.key
+*.pfx
+*.p12
+*.pem

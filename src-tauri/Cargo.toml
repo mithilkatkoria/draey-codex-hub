@@ -1,6 +1,6 @@
 [package]
 name = "draey-codex-hub"
-version = "0.1.0-alpha.3"
+version = "0.1.0-alpha.4"
 description = "Multiple Codex accounts in your existing workspace"
 authors = ["Draey"]
 edition = "2021"
@@ -31,6 +31,7 @@ sha2 = "0.10"
 base64 = "0.22"
 toml = "0.8"
 tauri-plugin-single-instance = "2"
+tauri-plugin-updater = "2"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.55"

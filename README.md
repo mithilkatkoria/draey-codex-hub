@@ -25,7 +25,7 @@ This is an account-management tool, not a way to increase allowances or bypass a
 
 ## Download for Windows
 
-**[Download v0.1.0-alpha.3 for Windows](https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.3)**
+**[Download v0.1.0-alpha.4 for Windows](https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.4)**
 
 1. Download **Draey-Codex-Hub-setup.exe** from the release's Assets section and run it. This creates the Start menu shortcut.
 2. Open **Draey Codex Hub** from Windows Search. For a portable copy, download the ZIP, extract it, and open **Draey Codex Hub.exe** instead.
@@ -49,7 +49,11 @@ To appear in Windows Search, use the installer rather than just running a portab
 
 ## Updates and resource use
 
-Open **Settings > App updates > View releases on GitHub**. Install the newer setup over your existing installation, or close the portable app and replace its EXE. Your accounts and preferences stay in a separate user folder. This release does not automatically download or install updates. A signed updater and update feed would be needed for automatic installation; see [Tauri updater documentation](https://v2.tauri.app/plugin/updater/).
+From **alpha.4 onward**, the app checks for updates after startup. Choose **Settings > App updates > Download and install** when a new release is available. Updates are signature verified and install only after you click. Saved accounts and projects remain in their separate folder.
+
+People using alpha.3 or earlier need one manual setup download to obtain the updater. A portable copy becomes an installed app when updated through the installer. See the [user and maintainer update guide](docs/updates.md) for the complete process.
+
+**Windows publisher signing is not yet configured.** This download can still show Unknown publisher or SmartScreen warnings. Update signatures establish update integrity, not a verified Windows publisher. The owner must complete signing-provider identity verification; the [Windows signing setup guide](docs/windows-signing.md) explains the required steps.
 
 The Hub uses Windows WebView2 rather than bundling a browser. Its UI uses CSS and SVG, including a short reduced-motion-aware startup animation. Usage requests are capped at three simultaneously, with no limit on saved accounts. Display polling pauses while hidden. WebView2 and temporary Codex app-server processes still consume memory; a universal under-1% RAM promise would be inaccurate.
 

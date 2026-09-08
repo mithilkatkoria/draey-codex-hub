@@ -7,6 +7,20 @@ All published releases receive an immutable Git tag and an entry here. Unrelease
 ### Pending
 - Record the next changes here.
 
+## [0.1.0-alpha.4] - 2026-09-08
+
+### Added
+- Signature-verified in-app updates, a startup availability check, explicit download/install control, progress, retry states, and a GitHub update feed.
+- A manual GitHub Actions release workflow using the encrypted updater signing key. Public release assets are published before the update feed advances.
+- User setup/update instructions and a separate Windows publisher-signing guide.
+
+### Changed
+- Lengthened the grayscale D introduction to 3.2 seconds while accounts continue loading underneath. Reduced-motion preferences still skip it.
+- Sculpted transparent SVG crown, orbit, cube, and ribbon artwork on vertical account cards.
+- Show used and remaining percentages to one decimal where reported, actual allowance window length, reset countdown, and exact local reset date. Pro keeps its reported windows.
+
+Windows Authenticode publisher signing is not yet configured. Update signatures do not remove Unknown publisher or guarantee immediate SmartScreen reputation. Users on alpha.3 and earlier need one manual upgrade. Full real A/B/A Desktop acceptance remains pending.
+
 ## [0.1.0-alpha.3] - 2026-09-07
 
 ### Changed
@@ -65,9 +79,11 @@ The signed-out restart flow still requires real Desktop acceptance; no productio
 - Unsigned test executable; no signed installer.
 - Initial download predates the documentation commit tagged with this release; it is not claimed to be a reproducible artifact of that tag.
 
-[Unreleased]: https://github.com/mithilkatkoria/draey-codex-hub/compare/v0.1.0-alpha.3...main
+[Unreleased]: https://github.com/mithilkatkoria/draey-codex-hub/compare/v0.1.0-alpha.4...main
 [0.1.0-alpha.1]: https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.1
 
 [0.1.0-alpha.2]: https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.2
 
 [0.1.0-alpha.3]: https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.3
+
+[0.1.0-alpha.4]: https://github.com/mithilkatkoria/draey-codex-hub/releases/tag/v0.1.0-alpha.4

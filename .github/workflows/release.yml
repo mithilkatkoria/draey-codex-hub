@@ -1,0 +1,56 @@
+name: Publish Windows update
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: publish-windows
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --global pnpm@10
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm version:check
+      - run: pnpm test
+      - run: node --test scripts/version.test.mjs
+      - run: rustup toolchain install stable-x86_64-pc-windows-msvc --profile minimal
+      - run: cargo test --locked --manifest-path src-tauri/Cargo.toml --lib
+      - name: Build signed updater artifacts
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          if (!$env:TAURI_SIGNING_PRIVATE_KEY) { throw 'Configure the private updater signing key in repository secrets first.' }
+          pnpm package
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./scripts/package-release.ps1
+          $version=(Get-Content package.json -Raw | ConvertFrom-Json).version
+          node scripts/verify-update-signature.mjs "artifacts/releases/$version/Draey-Codex-Hub-setup.exe"
+          if ($LASTEXITCODE -ne 0) { throw 'Update signature verification failed. Nothing will be published.' }
+      - name: Publish immutable version and advance the update feed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version=(Get-Content package.json -Raw | ConvertFrom-Json).version
+          $folder="artifacts/releases/$version"
+          $assets=@(Get-ChildItem -LiteralPath $folder -File | ForEach-Object { $_.FullName })
+          $options=@('--repo',$env:GITHUB_REPOSITORY,'--target',(git rev-parse HEAD),'--title',"Draey Codex Hub $version",'--notes',"Windows update $version. See CHANGELOG.md and VERIFICATION.md at the release tag. Installer updates are signature verified. Windows publisher signing is separate.")
+          if ($version.Contains('-')) { $options+='--prerelease' }
+          gh release create "v$version" @assets @options
+          if ($LASTEXITCODE -ne 0) { throw 'Release was not published. The update feed was not changed.' }
+          New-Item -ItemType Directory -Force updates | Out-Null
+          Copy-Item -LiteralPath "$folder/latest.json" -Destination updates/latest.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add updates/latest.json
+          git commit -m "Publish update feed for $version"
+          git push origin HEAD:main
+          if ($LASTEXITCODE -ne 0) { throw 'Release exists, but the feed push failed. Reconcile main and publish its reviewed latest.json; do not overwrite the release.' }

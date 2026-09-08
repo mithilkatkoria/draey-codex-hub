@@ -1,3 +1,5 @@
+import { AppUpdates } from './components/AppUpdates';
+import { startUpdateCheck } from './services/updates';
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, ArrowRight, FolderOpen, Layers, Plus, RefreshCw, Settings2, X, Monitor } from 'lucide-react';
 import { useHub, type HubView } from './stores/useHub';
@@ -17,6 +19,7 @@ import type { Profile } from './types';
 
 export default function App() {
  const hub=useHub();
+ useEffect(startUpdateCheck,[]);
  return <StreamerModeProvider profiles={hub.store.profiles} projects={hub.store.projects}><HubContent hub={hub}/></StreamerModeProvider>;
 }
 function HubContent({hub}:{hub:HubView}) {
@@ -71,14 +74,14 @@ function HubContent({hub}:{hub:HubView}) {
     <StreamerModeControl/>
     <button className={`settings-nav ${page==='settings'?'selected':''}`} aria-current={page==='settings'?'page':undefined} onClick={()=>setPage('settings')}><Settings2 size={17}/>Settings</button>
     <div className="device-label"><Monitor size={13}/>Stored on this device</div>
-    <div className="version"><span>v0.1.0-alpha.3 · Windows</span></div>
+    <div className="version"><span>v0.1.0-alpha.4 · Windows</span></div>
    </div>
   </aside>
   <main className="workspace-main">
    {mockMode&&<div className="mode-banner">Development preview · Simulated data</div>}
    {!nativeAvailable&&!mockMode&&<div className="mode-banner">Browser preview · Connect accounts in the Windows app</div>}
    <div className="main-content">
-    <WorkspaceNotice workspace={hub.workspace} profiles={store.profiles} onCancel={()=>void hub.cancelSwitch()}/>
+    <AppUpdates compact/><WorkspaceNotice workspace={hub.workspace} profiles={store.profiles} onCancel={()=>void hub.cancelSwitch()}/>
     <div className="page-content" key={page}>
      {page==='settings'?<Settings hub={hub}/>:page==='projects'?<><div className="page-heading"><div className="eyebrow">Workspace</div><h1>Projects</h1><p>Open a folder with the account you choose.</p></div><Projects hub={hub}/></>:<>
       <div className="dashboard-heading">

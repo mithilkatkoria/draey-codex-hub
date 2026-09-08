@@ -8,7 +8,9 @@ it('removes the launch overlay promptly while leaving app content mounted',()=>{
  const view=render(<><LaunchIntro reducedMotion={false}/><main>Ready workspace</main></>);
  expect(view.container.querySelector('.launch-intro')).not.toBeNull();
  expect(view.getByText('Ready workspace')).toBeDefined();
- act(()=>vi.advanceTimersByTime(1700));
+ act(()=>vi.advanceTimersByTime(2000));
+ expect(view.container.querySelector('.launch-intro')).not.toBeNull();
+ act(()=>vi.advanceTimersByTime(1300));
  expect(view.container.querySelector('.launch-intro')).toBeNull();
 });
 it('skips the intro for system or app reduced-motion preferences',()=>{

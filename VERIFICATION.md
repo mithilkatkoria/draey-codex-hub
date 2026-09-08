@@ -67,3 +67,16 @@ A headless local preview tested 1, 3, 4, and 9 synthetic cards at 800, 1280, and
 The portable executable is 11,278,848 bytes (10.76 MiB); the NSIS installer is 2,530,748 bytes (2.41 MiB). The ZIP contains only the executable, license, branding notice, and startup instructions. Checksums accompany all three downloads.
 
 A point-in-time measurement of the installed pre-portrait alpha.3 Hub plus its six WebView2 processes was 391.6 MiB working set (2.45% of this 15.6 GiB RAM machine). This excludes the Codex Desktop application it launched and development tools. It is not a peak or a guarantee for the final portrait build. The final build adds bounded requests and hidden polling suspension; no under-1% claim is made.
+
+
+## Alpha.4 verification, 8 September 2026
+
+- Longer 3.2-second D introduction, with tests confirming it remains at two seconds and is removed by 3.3 seconds; app and system reduced motion skip it.
+- Sculpted SVG crown, discs, cubes, and ribbon. No bitmap or 3D runtime dependency. Detailed percentages retain one decimal, distinguish used from remaining, and include the real window length and exact local reset date.
+- 36 frontend tests and the TypeScript/production frontend build passed. The 12 headless synthetic layout cases (1/3/4/9 accounts at 800/1280/1600px) passed without horizontal page overflow; the final screenshot was inspected and includes simulated-data labelling.
+- The optimized x64 executable and NSIS installer built with the new Tauri updater. The installer signature and its trusted comment verified against the embedded public key. A modified installer was correctly rejected by the release-verification script.
+- The owner explicitly authorized storing the updater key in the encrypted GitHub Actions repository secret. The key is outside the repository and is not bundled in releases. The workflow signs releases and advances the update feed only after publishing assets.
+- Windows Authenticode inspection still reports NotSigned. The owner does not yet have a verified Windows signing identity and requested setup instructions. See docs/windows-signing.md. Update signatures are not Windows publisher certificates.
+- The updater is covered for startup checks without automatic installation, duplicate checks, failure/retry, and restriction to this repository's HTTPS release downloads. A real installer-driven upgrade of an existing user's app is not yet observed; no silent or forced installation is performed during this task.
+- Account-switch acceptance remains as recorded above. This release does not claim that UI or updater tests establish a real A/B/A Codex Desktop switch.
+- Final native regression run: 22 tests passed. The 5 version-tool tests also passed. The standalone executable is 14,694,400 bytes; the updater-signed installer is 3,567,866 bytes.
