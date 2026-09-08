@@ -1,0 +1,11 @@
+{
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVURDlGUnlQRUpyVEM2bytwZWpGdmN3ZTRTZ3FzR241SVBNMnpGRllpTmlycXI4OGpBRUdtZTMzK05jbVFlZlJ6RXZ2MFp6NVhhVHVUOWIvcGRpY2dIc2x6UFFWL2IwWHdBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg4ODE0OTM3CWZpbGU6RHJhZXkgQ29kZXggSHViXzAuMS4wLWFscGhhLjRfeDY0LXNldHVwLmV4ZQpOQVYwcFdlZHBTcGxhWDM1V3RiOWU0OXI0WFAxdUF2eE9OdDAwZ2xHWWZNb01ZenBWa2N6RjVDOFV5dWw4WkdERXdsZWV6STY1ajIxLytjQ0hzQzlDQT09Cg==",
+      "url": "https://github.com/mithilkatkoria/draey-codex-hub/releases/download/v0.1.0-alpha.4/Draey-Codex-Hub-setup.exe"
+    }
+  },
+  "pub_date": "2026-09-07T21:02:52.6798638Z",
+  "version": "0.1.0-alpha.4",
+  "notes": "Draey Codex Hub 0.1.0-alpha.4. See the release notes on GitHub for changes and verification details."
+}
