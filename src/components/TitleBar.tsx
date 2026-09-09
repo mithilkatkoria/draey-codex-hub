@@ -17,7 +17,7 @@ export function TitleBar({onSearch,onError,closeToTray}:{onSearch:()=>void;onErr
   try{await getCurrentWindow()[action]();}catch{onError('The window control could not complete. Try the Windows taskbar menu.');}
  }
  return <header className="window-bar">
-  <div className="window-brand" data-tauri-drag-region><img className="brand-mark" src={brandMark} alt="" aria-hidden="true"/><strong>draey</strong><span className="window-product">Codex Hub</span></div>
+  <div className="window-brand" data-tauri-drag-region><img className="brand-mark" src={brandMark} alt="" aria-hidden="true"/><strong>Vdoc</strong><span className="window-product">Codex Hub</span></div>
   <div className="window-drag-space" data-tauri-drag-region/>
   <button className="window-search" onClick={onSearch}><Search size={14}/><span>Find an account, project, or action</span><kbd>Ctrl K</kbd></button>
   <div className="window-drag-space" data-tauri-drag-region/>

@@ -67,3 +67,27 @@
 .density-compact .portrait-art>svg.account-sculpture { width:140px;height:108px; }
 @container accounts (max-width:525px) { .account-tile .quota-ring { width:60px;height:60px;flex-basis:60px; } }
 .update-banner{display:flex;align-items:center;justify-content:space-between;gap:20px;border:1px solid #4f607f;border-radius:9px;background:#1b2635;padding:16px 20px;margin-bottom:22px}.update-banner h2{font-size:14px;margin-bottom:5px}.update-banner p{font-size:12px}.update-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;flex-shrink:0}.update-banner .update-actions{margin-top:0}.update-notes{white-space:pre-wrap;font-size:12px;line-height:1.7;margin:10px 0}.app-updates details{font-size:12px;margin-top:12px}@media(max-width:900px){.update-banner{align-items:flex-start;flex-direction:column}}
+
+/* Vdoc trial: four accounts use a readable, balanced two-by-two composition. */
+.profile-grid:has(> .account-tile:nth-child(4):last-child) { grid-template-columns:repeat(2,minmax(0,1fr));max-width:1120px;margin-inline:auto;gap:22px; }
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .account-tile { padding:24px;border-radius:16px;background:radial-gradient(ellipse at 90% 0%,color-mix(in srgb,var(--profile-accent) 10%,transparent),transparent 60%),#11171c; }
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .portrait-art { height:112px; }
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .portrait-art>svg.account-sculpture { width:145px;height:112px; }
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .identity-title h3 { font-size:25px; }
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .plan { font-size:14px; }
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .card-state,
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .availability-chip,
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .plan-chip { font-size:12px; }
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .tile-quotas { min-height:0;gap:18px;padding:20px 0; }
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .quota-heading { font-size:15px; }
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .quota-ring { width:76px;height:76px;flex-basis:76px; }
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .quota-ring strong { font-size:21px; }
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .quota-detail,
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .quota-reset { font-size:13px; }
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .quota-date,
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .quota-caption,
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .tile-sync,
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .tile-bank summary { font-size:12px; }
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .launch-button { font-size:14px;min-height:46px;border-radius:8px; }
+.profile-grid:has(> .account-tile:nth-child(4):last-child) .tile-error p { font-size:13px; }
+@container accounts (max-width:640px) { .profile-grid:has(> .account-tile:nth-child(4):last-child) { grid-template-columns:minmax(0,1fr);max-width:480px; } }

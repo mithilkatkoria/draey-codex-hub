@@ -6,5 +6,5 @@ export function LaunchIntro({reducedMotion}:{reducedMotion:boolean}) {
  const [visible,setVisible]=useState(()=>!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
  useEffect(()=>{if(reducedMotion){setVisible(false);return;}const timer=setTimeout(()=>setVisible(false),3200);return()=>clearTimeout(timer);},[reducedMotion]);
  if(!visible)return null;
- return <div className="launch-intro" aria-hidden="true" onAnimationEnd={e=>{if(e.animationName==='intro-depart')setVisible(false);}}><div className="intro-emblem"><img src={mark} alt=""/><span>draey</span><small>CODEX HUB</small></div></div>;
+ return <div className="launch-intro" aria-hidden="true" onAnimationEnd={e=>{if(e.animationName==='intro-depart')setVisible(false);}}><div className="intro-emblem"><img src={mark} alt=""/><span>Vdoc</span><small>CODEX HUB</small></div></div>;
 }

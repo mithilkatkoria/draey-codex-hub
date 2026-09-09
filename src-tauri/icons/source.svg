@@ -1,18 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="fold" x1="192" y1="64" x2="414" y2="437" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#d4c9ff"/>
-      <stop offset=".46" stop-color="#a991f2"/>
-      <stop offset="1" stop-color="#7060c9"/>
-    </linearGradient>
-    <linearGradient id="spine" x1="62" y1="122" x2="145" y2="404" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#eee9ff"/>
-      <stop offset="1" stop-color="#b8a5f8"/>
-    </linearGradient>
-  </defs>
-  <!-- A split, folded D. The silhouette and centre remain transparent. -->
-  <path fill="url(#spine)" d="M73 126 127 95Q144 85 144 105V364Q144 380 130 388L77 419Q60 429 60 409V149Q60 133 73 126Z"/>
-  <path fill="url(#fold)" d="M192 83 244 53Q256 46 268 53L355 103C421 141 458 196 458 256S421 371 355 409L268 459Q256 466 244 459L192 429V333L256 370 311 338C350 315 374 289 374 256S350 197 311 174L192 105Z"/>
-  <path fill="#eee8ff" opacity=".35" d="M192 83 244 53Q256 46 268 53L355 103C397 127 427 158 443 193L310 116Q256 85 192 105Z"/>
-  <path fill="#5f4daf" opacity=".35" d="M192 333 256 370 311 338C350 315 374 289 374 256 400 321 365 387 307 420L256 450 192 413Z"/>
+<defs><linearGradient id="silver" x2=".8" y2="1"><stop stop-color="#edf0f5"/><stop offset=".5" stop-color="#a9adb8"/><stop offset="1" stop-color="#666c79"/></linearGradient><linearGradient id="edge" x2="1" y2="1"><stop stop-color="#c7b8ff"/><stop offset="1" stop-color="#777087"/></linearGradient></defs>
+<path fill="#343945" d="M48 84h103l112 262L371 84h94L296 441q-10 22-35 22h-31q-22 0-32-23Z"/>
+<path fill="url(#silver)" d="M39 64h106l100 232-27 41 38 49L367 64h106L295 424q-11 22-35 22h-25q-22 0-32-22Z"/>
+<path fill="url(#edge)" d="m145 64 115 231-30 42 35 47-9 23-51-69 25-43Z"/>
+<path fill="#fff" opacity=".45" d="M39 64h106l7 15H47Zm328 0h106l-8 15H362Z"/>
 </svg>
