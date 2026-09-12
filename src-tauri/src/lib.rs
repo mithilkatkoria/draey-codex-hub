@@ -276,6 +276,10 @@ pub fn run(){
  let builder=tauri::Builder::default().plugin(tauri_plugin_updater::Builder::new().build()).manage(updates::UpdateState::default()).plugin(tauri_plugin_single_instance::init(|app,_,_|show(app))).setup(|app|{
   let (path,store)=storage::load_current().map_err(std::io::Error::other)?;
   app.manage(Hub{usage_slots:tokio::sync::Semaphore::new(3),path,store:Mutex::new(store),operations:Mutex::new(HashMap::new()),logins:Mutex::new(HashMap::new()),workspace_gate:tokio::sync::RwLock::new(()),pending_switch:Mutex::new(None),switch_cancel:Mutex::new(None)});
+  // Set the window icon explicitly as well as the independent tray icon.
+  if let Some(window)=app.get_webview_window("main") {
+   window.set_icon(tauri::image::Image::from_bytes(include_bytes!("../icons/128x128.png"))?)?;
+  }
   let icon=tauri::image::Image::from_bytes(include_bytes!("../icons/32x32.png"))?;
   tauri::tray::TrayIconBuilder::with_id("hub").icon(icon).tooltip("Vdoc").on_menu_event(|app,event|{let id=event.id.as_ref();match id {"quit"=>app.exit(0),"dashboard"=>show(app),"settings"=>{show(app);let _=app.emit("navigate","settings");},"refresh"=>{let app=app.clone();let profiles=app.state::<Hub>().read().profiles;for p in profiles{let app=app.clone();tauri::async_runtime::spawn(async move{let _=refresh(&app,p.id).await;});}},_=>{if let Some(id)=id.strip_prefix("profile:"){let app=app.clone();let id=id.to_string();tauri::async_runtime::spawn(async move{if let Err(e)=launch_profile(app.clone(),id,None).await{show(&app);let _=app.emit("hub-error",e);}});}}}}).build(app)?;
   update_tray(app.handle());
