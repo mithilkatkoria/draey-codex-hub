@@ -123,3 +123,30 @@
  .profile-grid:has(> .account-tile:nth-child(4):last-child) .quota-detail { margin:0; }
  .profile-grid:has(> .account-tile:nth-child(4):last-child) .quota-segments { margin:3px 0; }
 }
+
+/* Preserve intrinsic section height for every account count, including filters. */
+.profile-card.account-tile>.tile-quotas { flex:0 0 auto;min-height:min-content; }
+.profile-card.account-tile>.tile-extra,.profile-card.account-tile>.tile-error { flex-shrink:0;position:static; }
+.account-tile .tile-extra { margin-top:8px; }
+.account-tile .tile-extra summary { min-height:30px;font-size:12px; }
+.sidebar-collapse { display:flex;align-items:center;gap:10px;border:0;background:transparent;color:#91a2b9;padding:10px;border-radius:8px;margin:0 0 10px;width:100%;font-size:11px; }
+.sidebar-collapse:hover { background:#ffffff08;color:#edf1f8; }
+.sidebar nav button>.nav-label { margin-left:0;background:none;font-size:inherit;padding:0;color:inherit; }
+.sidebar-collapsed .sidebar { width:68px;padding-inline:10px; }
+.sidebar-collapsed .workspace-main { margin-left:68px; }
+.sidebar-collapsed .sidebar-collapse { justify-content:center; }
+.sidebar-collapsed .sidebar-collapse span,.sidebar-collapsed .nav-label,.sidebar-collapsed .sidebar nav button>span,.sidebar-collapsed .device-label,.sidebar-collapsed .version { display:none; }
+.sidebar-collapsed .sidebar nav button,.sidebar-collapsed .settings-nav { justify-content:center;padding-inline:0; }
+.sidebar-collapsed .streamer-toggle { justify-content:center;padding:10px; }
+.sidebar-collapsed .streamer-toggle>span,.sidebar-collapsed .streamer-toggle>svg:last-child { display:none; }
+.sidebar-collapsed .streamer-popover { left:54px;bottom:0;width:300px; }
+.profile-card.account-tile:hover { transform:none;box-shadow:0 4px 16px #00000020; }
+.profile-card.account-tile { transition:border-color 160ms ease,background-color 160ms ease; }
+button { transition:background-color 140ms ease,border-color 140ms ease,color 140ms ease; }
+button:focus-visible,summary:focus-visible { outline:2px solid #a8bbec;outline-offset:3px; }
+.page-content { animation:panel-enter 160ms ease-out; }
+@keyframes panel-enter { from { opacity:.5;transform:translateY(3px); } to { opacity:1;transform:none; } }
+.quota-ring .ring-value { transition:stroke-dasharray 350ms ease-out; }
+@media(prefers-reduced-motion:reduce) { .page-content { animation:none; } .quota-ring .ring-value,button { transition:none; } }
+.reduced-motion .page-content { animation:none; }
+.reduced-motion .quota-ring .ring-value,.reduced-motion button { transition:none; }

@@ -1,7 +1,7 @@
 import { AppUpdates } from './components/AppUpdates';
 import { startUpdateCheck } from './services/updates';
 import { useEffect, useState } from 'react';
-import { ArrowUpRight, ArrowRight, FolderOpen, Layers, Plus, RefreshCw, Settings2, X, Monitor } from 'lucide-react';
+import { ArrowUpRight, ArrowRight, FolderOpen, Layers, Plus, RefreshCw, Settings2, X, Monitor, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useHub, type HubView } from './stores/useHub';
 import { StreamerModeProvider, StreamerModeControl, usePrivacy } from './components/StreamerMode';
 import { WorkspaceNotice } from './components/WorkspaceNotice';
@@ -24,6 +24,8 @@ export default function App() {
 }
 function HubContent({hub}:{hub:HubView}) {
  const privacy=usePrivacy();
+ const [sidebarCollapsed,setSidebarCollapsed]=useState(()=>{try{return localStorage.getItem('veyDock.sidebarCollapsed')==='true';}catch{return false;}});
+ function toggleSidebar(){setSidebarCollapsed(value=>{const next=!value;try{localStorage.setItem('veyDock.sidebarCollapsed',String(next));}catch{/* Keep the control usable when storage is unavailable. */}return next;});}
  const [accountFilter,setAccountFilter]=useState('all');
  const [page,setPage]=useState('dashboard');
  const [palette,setPalette]=useState(false);
@@ -62,17 +64,18 @@ function HubContent({hub}:{hub:HubView}) {
  const visibleProfiles=profiles.filter(p=>accountFilter==='all'||(accountFilter==='available'?p.availability==='available':p.availability!=='available'));
  const accountPage=page!=='projects'&&page!=='settings';
  if(hub.loadError)return <div className="app-shell"><TitleBar onSearch={()=>{}} onError={hub.setError} closeToTray={store.settings.minimizeToTray}/><main className="recovery-screen"><section className="settings-panel" role="alert"><h1>Unable to load accounts</h1><p>{privacy.detail(hub.loadError)}</p><p>Your saved files have been preserved.</p><button className="primary" onClick={()=>void hub.retryLoad()}><RefreshCw size={16}/> Retry</button><StreamerModeControl/></section></main></div>;
- return <div className={`app-shell ${store.settings.reducedMotion?'reduced-motion':''} density-${store.settings.density}`}>
+ return <div className={`app-shell ${sidebarCollapsed?'sidebar-collapsed':''} ${store.settings.reducedMotion?'reduced-motion':''} density-${store.settings.density}`}>
   <LaunchIntro reducedMotion={store.settings.reducedMotion}/><TitleBar onSearch={()=>setPalette(true)} onError={hub.setError} closeToTray={store.settings.minimizeToTray}/>
   <aside className="sidebar">
+   <button className="sidebar-collapse" onClick={toggleSidebar} aria-label={sidebarCollapsed?'Expand sidebar':'Collapse sidebar'} aria-expanded={!sidebarCollapsed} title={sidebarCollapsed?'Expand sidebar':'Collapse sidebar'}>{sidebarCollapsed?<PanelLeftOpen size={18}/>:<PanelLeftClose size={18}/>}<span>Collapse sidebar</span></button>
    <div className="workspace-label">Workspace</div>
    <nav aria-label="Main navigation">
-    <button className={accountPage?'selected':''} aria-current={accountPage?'page':undefined} onClick={()=>setPage('dashboard')}><Layers size={17}/>Accounts<span>{profiles.length}</span></button>
-    <button className={page==='projects'?'selected':''} aria-current={page==='projects'?'page':undefined} onClick={()=>setPage('projects')}><FolderOpen size={17}/>Projects<span>{store.projects.length}</span></button>
+    <button className={accountPage?'selected':''} aria-current={accountPage?'page':undefined} aria-label="Accounts" title="Accounts" onClick={()=>setPage('dashboard')}><Layers size={17}/><span className="nav-label">Accounts</span><span>{profiles.length}</span></button>
+    <button className={page==='projects'?'selected':''} aria-current={page==='projects'?'page':undefined} aria-label="Projects" title="Projects" onClick={()=>setPage('projects')}><FolderOpen size={17}/><span className="nav-label">Projects</span><span>{store.projects.length}</span></button>
    </nav>
    <div className="sidebar-bottom">
     <StreamerModeControl/>
-    <button className={`settings-nav ${page==='settings'?'selected':''}`} aria-current={page==='settings'?'page':undefined} onClick={()=>setPage('settings')}><Settings2 size={17}/>Settings</button>
+    <button className={`settings-nav ${page==='settings'?'selected':''}`} aria-current={page==='settings'?'page':undefined} aria-label="Settings" title="Settings" onClick={()=>setPage('settings')}><Settings2 size={17}/><span className="nav-label">Settings</span></button>
     <div className="device-label"><Monitor size={13}/>Stored on this device</div>
     <div className="version"><span>v0.1.0-alpha.4 · Windows</span></div>
    </div>
